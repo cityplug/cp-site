@@ -1,15 +1,24 @@
-// Make navbar sticky on scroll
+// Sticky navbar on scroll
 window.addEventListener("scroll", function () {
   const navbar = document.querySelector(".navbar");
-  if (window.scrollY > 10) {
-    navbar.classList.add("sticky");
-  } else {
-    navbar.classList.remove("sticky");
-  }
+  navbar.classList.toggle("sticky", window.scrollY > 10);
 });
 
-// Form submission
+// Live character counter
+const messageInput = document.getElementById("message");
+const charUsed = document.getElementById("char-used");
+
+if (messageInput && charUsed) {
+  messageInput.addEventListener("input", () => {
+    charUsed.textContent = messageInput.value.length;
+  });
+}
+
+// Honeypot spam trap
 document.getElementById("contact-form").addEventListener("submit", function (e) {
-  e.preventDefault();
-  alert("Thank you! Your application has been submitted.");
+  const gotcha = this.querySelector('input[name="_gotcha"]');
+  if (gotcha && gotcha.value !== "") {
+    e.preventDefault(); // Bot caught
+    return;
+  }
 });

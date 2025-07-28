@@ -69,20 +69,34 @@
 
   <!-- Contact / Footer -->
   <section id="contact" class="contact">
-    <form id="contact-form">
+    <form id="contact-form" method="POST" action="https://formspree.io/f/xvgqrrgv">
+      <label for="firstName">Name *</label>
       <div class="form-row">
-        <input type="text" name="firstName" placeholder="First Name" required />
-        <input type="text" name="lastName" placeholder="Last Name" required />
+        <input type="text" id="firstName" name="firstName" placeholder="First Name" required />
+        <input type="text" id="lastName" name="lastName" placeholder="Last Name" required />
       </div>
-      <input type="email" name="email" placeholder="Email" required />
-      <label><input type="checkbox" /> Sign up for news and updates</label>
-      <input type="tel" name="phone" placeholder="Phone" />
-      <textarea name="message" placeholder="What can we help you with?" required></textarea>
+
+      <label for="email">Email *</label>
+      <input type="email" id="email" name="email" placeholder="Enter your email" required />
+
+      <label class="checkbox-label">
+        <input type="checkbox" name="newsletter" />
+        Sign up for news and updates
+      </label>
+
+      <label for="phone">Phone</label>
+      <input type="tel" id="phone" name="phone" placeholder="Phone" />
+
+      <label for="message">What can we help you with? *</label>
+      <textarea id="message" name="message" maxlength="250" placeholder="Tell us what you need" required></textarea>
+      <div class="char-counter"><span id="char-used">0</span>/250 characters</div>
+
+      <!-- Honeypot field to prevent spam -->
+      <input type="text" name="_gotcha" style="display:none">
+
       <button type="submit">Submit Application</button>
     </form>
-    <p style="font-size: 0.75rem; text-align: center; color: #888; margin-top: 1rem;">
-      Instagram icon by <a href="https://www.flaticon.com/free-icons/instagram" target="_blank" style="color:#74a0e3;">Freepik - Flaticon</a>
-    </p>
+
   </section>
 
 </body>
