@@ -18,9 +18,9 @@
     <nav>
       <ul>
         <li><a href="#hero" class="active">Home</a></li>
-        <li><a href="#about">About Us</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#plans">Plans</a></li>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="plans.html">Plans</a></li>
         <li>
           <a href="https://instagram.com/cp_installers" target="_blank" class="insta-link">
             <img src="assets/instagram-icon.png" alt="Instagram" class="instagram-icon" />
@@ -32,7 +32,7 @@
   </header>
 
   <!-- Hero -->
-  <section id="hero" class="hero">
+  <section id="hero" class="hero fade-in">
     <div class="hero-text">
       <h1>Connecting You to Tomorrow — Fast, Reliable Wi-Fi Solutions!</h1>
       <p>...Your Network, Our Expertise</p>
@@ -40,26 +40,26 @@
   </section>
 
   <!-- Services -->
-  <section id="services" class="services">
-    <div class="card">
+  <section id="services" class="services fade-in">
+    <div class="card zoom-in">
       <img src="assets/ap-icon.png" alt="Access Point">
       <h3>Access Point Installation</h3>
       <p>Professional high-speed Wi-Fi installation for homes and small businesses.</p>
       <button>Here's More Info</button>
     </div>
-    <div class="card">
+    <div class="card zoom-in">
       <img src="assets/camera-icon.png" alt="Camera">
       <h3>Security Camera Installation</h3>
       <p>Protect property and deter crime with our expert CCTV services.</p>
       <button>Here's More Info</button>
     </div>
-    <div class="card">
+    <div class="card zoom-in">
       <img src="assets/cabling-icon.png" alt="Cabling">
       <h3>Structured Cabling</h3>
       <p>Reliable IT support with smooth, proactive system management.</p>
       <button>Here's More Info</button>
     </div>
-    <div class="card">
+    <div class="card zoom-in">
       <img src="assets/plans-icon.png" alt="Plans">
       <h3>Plans</h3>
       <p>Tailored packages for residents and SMBs to streamline connectivity.</p>
@@ -68,7 +68,7 @@
   </section>
 
   <!-- Contact / Footer -->
-  <section id="contact" class="contact">
+  <section id="contact" class="contact fade-in">
     <form id="contact-form" method="POST" action="https://formspree.io/f/xvgqrrgv">
       <label for="firstName">Name *</label>
       <div class="form-row">
@@ -85,7 +85,7 @@
       </label>
 
       <label for="phone">Phone</label>
-      <input type="tel" id="phone" name="phone" placeholder="Phone" />
+      <input type="tel" id="phone" name="phone" placeholder="Phone" pattern="^[\\d\\s\\-()+]{7,15}$" />
 
       <label for="message">What can we help you with? *</label>
       <textarea id="message" name="message" maxlength="250" placeholder="Tell us what you need" required></textarea>
@@ -96,7 +96,6 @@
 
       <button type="submit">Submit Application</button>
     </form>
-
   </section>
 
 </body>

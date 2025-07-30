@@ -3,31 +3,31 @@
   font-family: 'Poppins';
   src: url('assets/poppins/Poppins-Regular.ttf') format('truetype');
   font-weight: 400;
-  font-style: normal;
 }
 @font-face {
   font-family: 'Poppins';
   src: url('assets/poppins/Poppins-Medium.ttf') format('truetype');
   font-weight: 500;
-  font-style: normal;
 }
 @font-face {
   font-family: 'Poppins';
   src: url('assets/poppins/Poppins-SemiBold.ttf') format('truetype');
   font-weight: 600;
-  font-style: normal;
 }
 @font-face {
   font-family: 'Poppins';
   src: url('assets/poppins/Poppins-Bold.ttf') format('truetype');
   font-weight: 700;
-  font-style: normal;
 }
 @font-face {
   font-family: 'Poppins';
   src: url('assets/poppins/Poppins-ExtraBold.ttf') format('truetype');
   font-weight: 800;
-  font-style: normal;
+}
+
+/* === Base === */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -38,6 +38,7 @@ body {
   color: #000;
 }
 
+/* === Navbar === */
 .navbar {
   position: absolute;
   top: 0;
@@ -99,6 +100,7 @@ body {
   animation: linkHoverColor 1s linear infinite;
 }
 
+/* === Hero Section === */
 .hero {
   background: url('assets/city_hero.png') center/cover no-repeat;
   height: 100vh;
@@ -112,10 +114,9 @@ body {
 .hero h1 {
   font-size: 2rem;
   font-weight: 800;
-  font-family: 'Poppins', sans-serif;
 }
 
-/* Services */
+/* === Services === */
 .services {
   display: flex;
   flex-wrap: wrap;
@@ -143,7 +144,6 @@ body {
 
 .card h3 {
   font-weight: 700;
-  font-family: 'Poppins', sans-serif;
 }
 
 .card button {
@@ -154,16 +154,14 @@ body {
   padding: 0.5rem 1rem;
   cursor: pointer;
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
 }
 
-/* Contact / Footer */
+/* === Contact / Footer === */
 .contact {
   background: #1e1e1e;
   color: #fff;
   padding: 3rem 1.5rem;
   text-align: left;
-  font-family: 'Poppins', sans-serif;
   display: flex;
   justify-content: center;
 }
@@ -178,7 +176,6 @@ body {
   margin-top: 1.25rem;
   margin-bottom: 0.25rem;
   font-weight: 500;
-  color: #fff;
 }
 
 .checkbox-label {
@@ -212,7 +209,6 @@ body {
   width: 100%;
   box-sizing: border-box;
   font-size: 1rem;
-  font-family: 'Poppins', sans-serif;
   font-weight: 400;
 }
 
@@ -233,7 +229,6 @@ body {
   transition: background 0.3s;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
 }
 
 .contact button:hover {
@@ -252,7 +247,6 @@ body {
   color: black !important;
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
-  font-family: 'Poppins', sans-serif;
   font-weight: 500;
   transition: background 0.3s;
 }
@@ -260,4 +254,27 @@ body {
 .hire-us-btn:hover {
   background: #74a0e3;
   color: white !important;
+}
+
+/* === Scroll Animations === */
+.fade-in {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.zoom-in {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.zoom-in.visible {
+  opacity: 1;
+  transform: scale(1);
 }

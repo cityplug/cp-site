@@ -22,3 +22,23 @@ document.getElementById("contact-form").addEventListener("submit", function (e) 
     return;
   }
 });
+
+// Animate on scroll
+const observer = new IntersectionObserver(
+  entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  },
+  {
+    threshold: 0.1,
+  }
+);
+
+// Observe fade-in and zoom-in elements
+document.querySelectorAll('.fade-in, .zoom-in').forEach(el => {
+  observer.observe(el);
+});
