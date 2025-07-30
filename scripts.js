@@ -16,7 +16,7 @@ if (messageInput && charUsed) {
 
 // Honeypot spam trap
 document.getElementById("contact-form").addEventListener("submit", function (e) {
-  const gotcha = this.querySelector('input[name="_gotcha"]');
+  const gotcha = this.querySelector('input[name=\"_gotcha\"]');
   if (gotcha && gotcha.value !== "") {
     e.preventDefault(); // Bot caught
     return;

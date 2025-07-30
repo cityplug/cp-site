@@ -1,4 +1,4 @@
-/* === Poppins Font Imports === */
+/* === Poppins Font === */
 @font-face {
   font-family: 'Poppins';
   src: url('assets/poppins/Poppins-Regular.ttf') format('truetype');
@@ -6,26 +6,10 @@
 }
 @font-face {
   font-family: 'Poppins';
-  src: url('assets/poppins/Poppins-Medium.ttf') format('truetype');
-  font-weight: 500;
-}
-@font-face {
-  font-family: 'Poppins';
-  src: url('assets/poppins/Poppins-SemiBold.ttf') format('truetype');
-  font-weight: 600;
-}
-@font-face {
-  font-family: 'Poppins';
   src: url('assets/poppins/Poppins-Bold.ttf') format('truetype');
   font-weight: 700;
 }
-@font-face {
-  font-family: 'Poppins';
-  src: url('assets/poppins/Poppins-ExtraBold.ttf') format('truetype');
-  font-weight: 800;
-}
 
-/* === Base === */
 html {
   scroll-behavior: smooth;
 }
@@ -33,7 +17,6 @@ html {
 body {
   margin: 0;
   font-family: 'Poppins', sans-serif;
-  font-weight: 400;
   background: #fff;
   color: #000;
 }
@@ -61,28 +44,23 @@ body {
 
 .logo img {
   height: 50px;
-  width: auto;
-  transition: transform 0.3s ease, filter 0.3s ease;
+  transition: transform 0.3s ease;
 }
 
 .logo img:hover {
   transform: scale(1.2);
-  filter: brightness(0) invert(1); /* Black to white effect */
 }
 
 .navbar ul {
   display: flex;
   gap: 2rem;
   list-style: none;
-  margin: 0;
-  padding: 0;
 }
 
 .navbar a {
   color: white;
   text-decoration: none;
   font-weight: 500;
-  position: relative;
 }
 
 .navbar a.active {
@@ -90,10 +68,7 @@ body {
 }
 
 @keyframes linkHoverColor {
-  0%   { color: #1b2a49; }
-  25%  { color: #243a64; }
-  50%  { color: #3a5c99; }
-  75%  { color: #4977c2; }
+  0% { color: #1b2a49; }
   100% { color: #74a0e3; }
 }
 
@@ -101,14 +76,14 @@ body {
   animation: linkHoverColor 1s linear infinite;
 }
 
-/* === Hero Section === */
+/* === Hero === */
 .hero {
   background: url('assets/city_hero.png') center/cover no-repeat;
   height: 100vh;
-  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white;
   text-align: center;
 }
 
@@ -128,14 +103,14 @@ body {
 
 .card {
   background: rgba(30, 30, 30, 0.95);
+  color: white;
   margin: 1rem;
   padding: 1.5rem;
   border-radius: 10px;
+  max-width: 300px;
+  flex: 1 1 250px;
   text-align: center;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  flex: 1 1 250px;
-  max-width: 300px;
-  color: white;
 }
 
 .card img {
@@ -148,21 +123,19 @@ body {
 }
 
 .card button {
-  margin-top: 1rem;
-  background: rgba(30, 30, 30, 1);
+  background: black;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
-  cursor: pointer;
   font-weight: 600;
+  cursor: pointer;
 }
 
-/* === Contact / Footer === */
+/* === Contact Form === */
 .contact {
   background: #1e1e1e;
-  color: #fff;
+  color: white;
   padding: 3rem 1.5rem;
-  text-align: left;
   display: flex;
   justify-content: center;
 }
@@ -174,62 +147,33 @@ body {
 
 .contact label {
   display: block;
-  margin-top: 1.25rem;
-  margin-bottom: 0.25rem;
-  font-weight: 500;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
   margin-top: 1rem;
-}
-
-.checkbox-label input[type="checkbox"] {
-  margin-right: 0.5rem;
 }
 
 .form-row {
   display: flex;
   gap: 1rem;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.form-row input {
-  width: 100%;
 }
 
 .contact input,
 .contact textarea {
-  background-color: #000;
-  color: #fff;
-  border: 1px solid #fff;
-  border-radius: 6px;
-  padding: 0.75rem;
   width: 100%;
-  box-sizing: border-box;
-  font-size: 1rem;
-  font-weight: 400;
-}
-
-.contact textarea {
-  min-height: 120px;
-  resize: vertical;
+  padding: 0.75rem;
+  border: 1px solid white;
+  border-radius: 6px;
+  background: black;
+  color: white;
 }
 
 .contact button {
   margin-top: 1.5rem;
   background: #f2f2f2;
-  color: #000;
+  color: black;
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .contact button:hover {
@@ -239,8 +183,6 @@ body {
 .instagram-icon {
   height: 20px;
   width: 20px;
-  object-fit: contain;
-  vertical-align: middle;
 }
 
 .hire-us-btn {
@@ -249,7 +191,6 @@ body {
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
   font-weight: 500;
-  transition: background 0.3s;
 }
 
 .hire-us-btn:hover {
@@ -257,13 +198,12 @@ body {
   color: white !important;
 }
 
-/* === Scroll Animations === */
+/* === Animations === */
 .fade-in {
   opacity: 0;
   transform: translateY(30px);
   transition: opacity 0.8s ease, transform 0.8s ease;
 }
-
 .fade-in.visible {
   opacity: 1;
   transform: translateY(0);
@@ -274,7 +214,6 @@ body {
   transform: scale(0.9);
   transition: opacity 0.8s ease, transform 0.8s ease;
 }
-
 .zoom-in.visible {
   opacity: 1;
   transform: scale(1);
