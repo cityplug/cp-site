@@ -385,20 +385,26 @@ h3 {
 
 .business-panel {
   background:
-    linear-gradient(180deg, rgba(18, 28, 40, 0.2), rgba(18, 28, 40, 0.95)),
-    url("assets/city_hero.png") 70% center / cover no-repeat;
+    linear-gradient(180deg, rgba(8, 13, 20, 0.48), rgba(8, 13, 20, 0.98)),
+    url("assets/satalite_rooftop.png") center / cover no-repeat;
+}
+
+.business-panel strong,
+.business-panel p {
+  color: var(--white);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65);
 }
 
 .service-area-panel {
   background:
-    linear-gradient(180deg, rgba(8, 13, 20, 0.36), rgba(8, 13, 20, 0.96)),
-    url("assets/main_hero.png") center / cover no-repeat;
+    linear-gradient(180deg, rgba(8, 13, 20, 0.5), rgba(8, 13, 20, 0.98)),
+    url("assets/satalite_rooftop.png") center / cover no-repeat;
 }
 
 .service-area-panel strong,
 .service-area-panel p {
   color: var(--white);
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65);
 }
 
 .panel-label {
