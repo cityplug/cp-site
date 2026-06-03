@@ -29,6 +29,8 @@ User-agent: *
 Content-Signal: search=yes,ai-train=no
 Allow: /
 
+Sitemap: https://www.cityplug.co.uk/sitemap.xml
+
 User-agent: Amazonbot
 Disallow: /
 
@@ -57,4 +59,3 @@ User-agent: meta-externalagent
 Disallow: /
 
 # END Cloudflare Managed Content
-
