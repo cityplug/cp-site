@@ -3,93 +3,373 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CP Wi-Fi & Solutions</title>
-  <link rel="icon" type="image/png" href="assets/fav blk.png" />
+  <meta name="description" content="CityPlug provides CCTV installation London, Wi-Fi installation South London, business Wi-Fi and network cabling across London, the M25 and Medway area. Free quotes available." />
+  <title>CityPlug | CCTV & Wi-Fi Installation London</title>
+  <link rel="canonical" href="https://www.cityplug.co.uk/" />
+  <link rel="icon" type="image/png" href="assets/fav%20blk.png" />
   <link rel="stylesheet" href="index.css" />
   <script defer src="scripts.js"></script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "@id": "https://www.cityplug.co.uk/#localbusiness",
+      "name": "CityPlug",
+      "url": "https://www.cityplug.co.uk/",
+      "email": "info@cityplug.co.uk",
+      "description": "CityPlug provides CCTV installation, Wi-Fi installation, business Wi-Fi and network cabling for homes and small businesses across South London, Greater London, the M25 and Medway area.",
+      "foundingDate": "2017",
+      "areaServed": [
+        { "@type": "City", "name": "London" },
+        { "@type": "AdministrativeArea", "name": "Greater London" },
+        { "@type": "Place", "name": "South London" },
+        { "@type": "Place", "name": "M25 area" },
+        { "@type": "Place", "name": "Medway" },
+        { "@type": "City", "name": "Gillingham" },
+        { "@type": "City", "name": "Sittingbourne" }
+      ],
+      "knowsAbout": [
+        "CCTV installation London",
+        "Wi-Fi installation South London",
+        "Business Wi-Fi installer London",
+        "Network cabling",
+        "Structured cabling",
+        "Remote CCTV viewing",
+        "UniFi access point installation",
+        "Hikvision CCTV installation"
+      ],
+      "makesOffer": [
+        {
+          "@type": "Offer",
+          "name": "CCTV installation",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "CCTV installation London",
+            "serviceType": "CCTV installation"
+          }
+        },
+        {
+          "@type": "Offer",
+          "name": "Home Wi-Fi installation",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Wi-Fi installation South London",
+            "serviceType": "Wi-Fi installation"
+          }
+        },
+        {
+          "@type": "Offer",
+          "name": "Business Wi-Fi and cabling",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Business Wi-Fi installer London",
+            "serviceType": "Business Wi-Fi and network cabling"
+          }
+        }
+      ],
+      "sameAs": []
+    }
+  </script>
 </head>
-<body style="margin:0; padding:0;">
-
-  <!-- Navbar -->
-  <header class="navbar">
-    <a href="#hero" class="logo">
-      <img src="assets/fav white.png" alt="CP Logo" id="logo-img">
+<body>
+  <header class="site-header" data-header>
+    <a href="#hero" class="brand" aria-label="CityPlug home">
+      <img src="assets/fav%20white.png" alt="" />
+      <span>CityPlug</span>
     </a>
-    <nav>
-      <ul>
-        <li><a href="#hero" class="active">Home</a></li>
-        <!-- <li><a href="about.html">About Us</a></li> -->
-        <!-- <li><a href="services.html">Services</a></li> -->
-        <li>
-          <a href="https://instagram.com/cp_installers" target="_blank">
-            <img src="assets/instagram-icon.png" alt="Instagram" class="instagram-icon" />
-          </a>
-        </li>
-        <li><a href="#contact" class="hire-us-btn">Hire Us</a></li>
-      </ul>
+
+    <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="site-nav" data-nav>
+      <a href="#services">Services</a>
+      <a href="#homes">Homes</a>
+      <a href="#business">Business</a>
+      <a href="#contact" class="nav-cta">Get a free quote</a>
     </nav>
   </header>
 
-  <!-- Hero -->
-  <section id="hero" class="hero fade-in">
-    <div class="hero-text">
-      <h1>Connecting You to Tomorrow — Fast, Reliable Wi-Fi Solutions!</h1>
-      <p>...Your Network, Our Expertise</p>
-    </div>
-  </section>
+  <main>
+    <section id="hero" class="hero section-reveal">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <p class="eyebrow">CCTV, Wi-Fi and network installs</p>
+        <h1>Fix weak Wi-Fi, dead zones and security blind spots.</h1>
+        <p class="hero-copy">CityPlug provides CCTV installation, Wi-Fi installation and network cabling for homes and small businesses across South London, Greater London, the M25 and Medway area.</p>
+        <div class="hero-actions">
+          <a href="#contact" class="button primary">Get a free quote</a>
+          <a href="#services" class="button secondary">View installation services</a>
+        </div>
+        <div class="hero-proof" aria-label="Service highlights">
+          <span>Serving London, Gillingham and Sittingbourne</span>
+          <span>Operating since 2017</span>
+          <span>Free quotes available</span>
+        </div>
+      </div>
+    </section>
 
-  <!-- Services -->
-  <section id="services" class="services fade-in">
-    <div class="card zoom-in">
-      <img src="assets/ap-icon.png" alt="Access Point">
-      <h3>Access Point Installation</h3>
-      <p>Professional high-speed Wi-Fi installation for homes and small businesses.</p>
-      <!-- <button>Here's More Info</button> -->
-    </div>
-    <div class="card zoom-in">
-      <img src="assets/camera-icon.png" alt="Camera">
-      <h3>Security Camera Installation</h3>
-      <p>Protect property and deter crime with our expert CCTV services.</p>
-      <!-- <button>Here's More Info</button> -->
-    </div>
-    <div class="card zoom-in">
-      <img src="assets/cabling-icon.png" alt="Cabling">
-      <h3>Structured Cabling</h3>
-      <p>Reliable IT support with smooth, proactive system management.</p>
-      <!-- <button>Here's More Info</button> -->
-    </div>
-  </section>
+    <section class="intro band">
+      <div class="content-grid">
+        <div>
+          <p class="eyebrow dark">Built for real problems</p>
+          <h2>Better Wi-Fi, clearer CCTV coverage and cabling that is installed properly.</h2>
+        </div>
+        <div class="intro-copy">
+          <p>Whether it is weak Wi-Fi upstairs, unreliable camera coverage, a small shop that needs better connectivity, or a landlord who wants a tidy setup, CityPlug keeps the job clear from first message to final test.</p>
+          <p>We install practical CCTV, Wi-Fi and network cabling solutions across London and nearby areas, with clean workmanship, free quotes and appointments arranged around your availability.</p>
+        </div>
+      </div>
+    </section>
 
-  <!-- Contact -->
-  <section id="contact" class="contact fade-in">
-    <form id="contact-form" method="POST" action="https://formspree.io/f/xvgqrrgv">
-      <label for="firstName">Name *</label>
-      <div class="form-row">
-        <input type="text" id="firstName" name="firstName" placeholder="First Name" required />
-        <input type="text" id="lastName" name="lastName" placeholder="Last Name" required />
+    <section class="split-section service-area-section">
+      <div class="split-copy section-reveal">
+        <p class="eyebrow dark">Local installation support</p>
+        <h2>Serving London, the M25 and Medway area.</h2>
+        <p>Based in South London and covering CCTV, Wi-Fi and cabling installations across Greater London, Gillingham, Sittingbourne and nearby locations.</p>
+        <div class="check-list">
+          <span>Operating since 2017</span>
+          <span>Most replies within 24 hours</span>
+          <span>UniFi, TP-Link and Hikvision</span>
+          <span>Free quotes available</span>
+        </div>
+      </div>
+      <div class="feature-panel service-area-panel section-reveal">
+        <span class="panel-label">Service area</span>
+        <strong>London, M25, Medway</strong>
+        <p>Residential and small business installs planned around your property, equipment needs and availability.</p>
+      </div>
+    </section>
+
+    <section id="services" class="services">
+      <div class="section-heading">
+        <p class="eyebrow dark">What we install</p>
+        <h2>CCTV installation London, Wi-Fi installation South London and tidy network cabling.</h2>
       </div>
 
-      <label for="email">Email *</label>
-      <input type="email" id="email" name="email" placeholder="Enter your email" required />
+      <div class="service-grid">
+        <article class="service-card section-reveal">
+          <img src="assets/camera-icon.png" alt="" />
+          <h3>CCTV installation</h3>
+          <p>Wired CCTV installation in London and nearby areas, with 4K camera options, NVR setup, remote viewing and mobile app handover for homes, shops, offices and small sites.</p>
+          <ul>
+            <li>Front door, driveway, garden and stock-area coverage</li>
+            <li>Hikvision-style NVR installs and mobile viewing setup</li>
+            <li>Clean mounting, tidy cable routes and tested recording</li>
+          </ul>
+        </article>
 
-      <label class="checkbox-label">
-        <input type="checkbox" name="newsletter" />
-        Sign up for news and updates
-      </label>
+        <article class="service-card section-reveal">
+          <img src="assets/ap-icon.png" alt="" />
+          <h3>Whole-home Wi-Fi</h3>
+          <p>Wi-Fi installation for South London homes with dead zones, poor upstairs signal, unreliable video calls, slow streaming or gaming dropouts.</p>
+          <ul>
+            <li>Eliminate dead zones and improve room-to-room coverage</li>
+            <li>Better video calls, faster streaming and smoother gaming</li>
+            <li>UniFi, TP-Link and access point placement advice</li>
+          </ul>
+        </article>
 
-      <label for="phone">Phone</label>
-      <input type="tel" id="phone" name="phone" placeholder="Phone" pattern="^[\\d\\s\\-()+]{7,15}$" />
+        <article class="service-card section-reveal">
+          <img src="assets/cabling-icon.png" alt="" />
+          <h3>Business Wi-Fi and cabling</h3>
+          <p>Business Wi-Fi installer support across London for small offices, salons, retail units, cafes and workshops where uptime and tidy cabling matter.</p>
+          <ul>
+            <li>Guest Wi-Fi, staff networks and network separation</li>
+            <li>Card machine, POS, printer and office device cabling</li>
+            <li>CCTV coverage for entrances, tills and stock areas</li>
+          </ul>
+        </article>
+      </div>
+    </section>
 
-      <label for="message">What can we help you with? *</label>
-      <textarea id="message" name="message" maxlength="250" placeholder="Tell us what you need" required></textarea>
-      <div class="char-counter"><span id="char-used">0</span>/250 characters</div>
+    <section id="homes" class="split-section">
+      <div class="split-copy section-reveal">
+        <p class="eyebrow dark">For homes</p>
+        <h2>Fix the rooms where the signal dies.</h2>
+        <p>Get stronger Wi-Fi where you actually use it, cleaner camera coverage around key areas, and a setup that feels properly finished instead of patched together. We cover London, Gillingham, Sittingbourne and nearby areas, with weekend installation slots available where possible.</p>
+        <div class="check-list">
+          <span>Wi-Fi dead-zone survey</span>
+          <span>Access point installation</span>
+          <span>CCTV for entrances and gardens</span>
+          <span>Weekend appointment slots</span>
+        </div>
+      </div>
+      <div class="feature-panel section-reveal">
+        <span class="panel-label">Popular home upgrades</span>
+        <strong>Wi-Fi, CCTV and tidy cabling</strong>
+        <p>Ideal for dead zones, garden offices, entrances, driveways, video calls, streaming, gaming and working from home.</p>
+      </div>
+    </section>
 
-      <!-- Honeypot -->
-      <input type="text" name="_gotcha" style="display:none">
+    <section id="business" class="split-section reverse">
+      <div class="feature-panel business-panel section-reveal">
+        <span class="panel-label">Small business fit</span>
+        <strong>Retail, salons, cafes, offices</strong>
+        <p>Reliable Wi-Fi, tidy cabling and CCTV coverage planned around your space, staff devices, customers, tills and trading hours.</p>
+      </div>
+      <div class="split-copy section-reveal">
+        <p class="eyebrow dark">For small businesses</p>
+        <h2>Reliable coverage for staff, guests and security.</h2>
+        <p>Keep staff devices connected, offer better guest Wi-Fi, support card machines and POS systems, separate staff and customer networks, and improve CCTV coverage without turning the install into a disruption.</p>
+        <div class="check-list">
+          <span>Guest Wi-Fi support</span>
+          <span>Staff and guest network separation</span>
+          <span>POS and office device cabling</span>
+          <span>CCTV for tills and entrances</span>
+        </div>
+      </div>
+    </section>
 
-      <button type="submit">Submit</button>
-    </form>
-  </section>
+    <section class="process band">
+      <div class="section-heading">
+        <p class="eyebrow dark">Simple process</p>
+        <h2>From enquiry to install without dragging it out.</h2>
+      </div>
+      <div class="process-grid">
+        <article>
+          <span>01</span>
+          <h3>Send the job details</h3>
+          <p>Tell us whether it is CCTV, Wi-Fi, cabling or a mix. If photos are useful, we can ask for them after the first reply.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h3>Get a free practical quote</h3>
+          <p>Most enquiries are answered within 24 hours. We confirm scope, likely hardware, access needs and the best appointment slot.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h3>Install and test</h3>
+          <p>We fit the equipment, tidy the setup and check the coverage before leaving.</p>
+        </article>
+      </div>
+    </section>
 
+    <section class="cta-strip">
+      <div>
+        <p class="eyebrow">Weekend slots available</p>
+        <h2>Have weak Wi-Fi or need CCTV fitted?</h2>
+      </div>
+      <a href="#contact" class="button primary">Get a free quote</a>
+    </section>
+
+    <section id="contact" class="contact">
+      <div class="contact-copy section-reveal">
+        <p class="eyebrow">Get a free quote</p>
+        <h2>Tell us what needs fixing.</h2>
+        <p>Use the form for CCTV installation London, Wi-Fi installation South London, business Wi-Fi or cabling enquiries across London, the M25 and Medway area. Add your postcode area, preferred availability and the main issue you want fixed.</p>
+        <div class="contact-notes">
+          <span>Serving London, Gillingham and Sittingbourne</span>
+          <span>Replies usually within 24 hours</span>
+          <span>Photos can be sent after the first reply</span>
+          <span>info@cityplug.co.uk</span>
+        </div>
+      </div>
+
+      <form id="contact-form" class="quote-form section-reveal" method="POST" action="https://formspree.io/f/xvgqrrgv">
+        <input type="hidden" name="_subject" value="New CityPlug quote enquiry" />
+        <input type="hidden" name="_language" value="en" />
+
+        <div class="form-row">
+          <label for="firstName">First name *</label>
+          <input type="text" id="firstName" name="firstName" autocomplete="given-name" maxlength="50" required />
+        </div>
+
+        <div class="form-row">
+          <label for="lastName">Last name *</label>
+          <input type="text" id="lastName" name="lastName" autocomplete="family-name" maxlength="50" required />
+        </div>
+
+        <div class="form-row">
+          <label for="email">Email *</label>
+          <input type="email" id="email" name="email" autocomplete="email" maxlength="120" required />
+        </div>
+
+        <div class="form-row">
+          <label for="phone">Phone *</label>
+          <input type="tel" id="phone" name="phone" autocomplete="tel" maxlength="20" pattern="^[\d\s\-()+]{7,20}$" required />
+        </div>
+
+        <div class="form-row">
+          <label for="service">What do you need? *</label>
+          <select id="service" name="service" required>
+            <option value="">Select a service</option>
+            <option>CCTV installation</option>
+            <option>Home Wi-Fi improvement</option>
+            <option>Small business Wi-Fi</option>
+            <option>Structured cabling</option>
+            <option>Not sure yet</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="postcode">Postcode area *</label>
+          <input type="text" id="postcode" name="postcode" autocomplete="postal-code" maxlength="20" placeholder="e.g. SE1, E14, CR0" required />
+        </div>
+
+        <div class="form-row">
+          <label for="availability">Preferred availability</label>
+          <select id="availability" name="availability">
+            <option>Flexible</option>
+            <option>Weekday daytime</option>
+            <option>Weekday evening</option>
+            <option>Saturday</option>
+            <option>Sunday</option>
+            <option>Weekend preferred</option>
+          </select>
+        </div>
+
+        <div class="form-row full">
+          <label for="message">Job details *</label>
+          <textarea id="message" name="message" maxlength="700" placeholder="Tell us the property type, problem, number of rooms/cameras, and anything useful." required></textarea>
+          <div class="char-counter"><span id="char-used">0</span>/700 characters</div>
+        </div>
+
+        <input type="text" name="_gotcha" class="hidden-field" tabindex="-1" autocomplete="off" />
+        <button type="submit">Get a free quote</button>
+      </form>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <a href="#hero" class="footer-brand" aria-label="CityPlug home">
+          <img src="assets/fav%20white.png" alt="" />
+          <span>CityPlug</span>
+        </a>
+        <a href="mailto:info@cityplug.co.uk" class="footer-email">info@cityplug.co.uk</a>
+      </div>
+
+      <div class="footer-main">
+        <div class="footer-about">
+          <p>Local CCTV, Wi-Fi and network cabling installations for homes and small businesses across London, the M25 and Medway area.</p>
+          <p>Free quotes available. Most enquiries are answered within 24 hours.</p>
+        </div>
+
+        <nav class="footer-links" aria-label="Footer services">
+          <a href="#services">CCTV installation London</a>
+          <a href="#services">Wi-Fi installation South London</a>
+          <a href="#business">Business Wi-Fi installer London</a>
+          <a href="#services">Structured network cabling</a>
+        </nav>
+
+        <div class="footer-areas">
+          <span>South London</span>
+          <span>Greater London</span>
+          <span>Gillingham</span>
+          <span>Sittingbourne</span>
+          <span>Medway</span>
+          <span>M25 area</span>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; <span data-current-year></span> CityPlug. All rights reserved.</p>
+        <p>CCTV, Wi-Fi and cabling installations since 2017.</p>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>
