@@ -11,6 +11,7 @@ The aim is simple:
 - Website visitor fills in the quote form.
 - Formspree receives the form.
 - Formspree emails the enquiry to info@cityplug.co.uk.
+- Formspree posts the enquiry into a dedicated Discord channel.
 - Spam is blocked as much as possible.
 - You send one real test enquiry from the live website before using the site properly.
 
@@ -53,7 +54,40 @@ Spam protection should be enabled before the site is used by real customers.
 
 The website already has a hidden honeypot field. That helps catch simple bots, but it should not be the only protection.
 
-## Part 4 - Test From The Live Website
+## Part 4 - Send Enquiries To Discord
+
+The website does not need a Discord webhook in its HTML. Keep the webhook URL inside Formspree only, because Discord webhook URLs are private credentials.
+
+Create a dedicated channel first so quote enquiries do not get mixed into normal chat.
+
+Recommended channel name:
+
+   cityplug-enquiries
+
+Discord setup:
+
+1. In the CityPlug Discord server, create a private text channel named cityplug-enquiries.
+2. Limit access to the people who should see customer names, emails, phone numbers and job details.
+3. Open the channel settings.
+4. Go to Integrations.
+5. Select Webhooks.
+6. Create a new webhook.
+7. Name it CityPlug Formspree.
+8. Copy the webhook URL.
+
+Formspree setup:
+
+1. Open the CityPlug form inside Formspree.
+2. Go to Workflow or integrations.
+3. Add the Discord action.
+4. Paste the Discord webhook URL into the Discord channel webhook field.
+5. Connect and save the workflow.
+
+Important: do not paste the Discord webhook URL into GitHub, Cloudflare Pages, the website HTML, Discord chat, or any public file.
+
+If the webhook URL is ever exposed, delete that webhook in Discord and create a new one.
+
+## Part 5 - Test From The Live Website
 
 Test the live Cloudflare Pages URL, not just the file on your computer.
 
@@ -71,18 +105,21 @@ Test the live Cloudflare Pages URL, not just the file on your computer.
    Job details: This is a test enquiry from the live CityPlug website.
 
 4. Submit the form.
-5. Check that the website shows the Formspree success page or confirmation.
+5. Check that the website stays on the CityPlug page, clears the form and shows the local success message.
 6. Check info@cityplug.co.uk for the email.
-7. Check the Formspree dashboard to confirm the submission appears there.
+7. Check the cityplug-enquiries Discord channel for the webhook message.
+8. Check the Formspree dashboard to confirm the submission appears there.
 
-If the email does not arrive:
+If the email or Discord message does not arrive:
 
 - Check the spam or junk folder for info@cityplug.co.uk.
 - Confirm info@cityplug.co.uk is verified in Formspree.
 - Confirm the website form endpoint is still https://formspree.io/f/xvgqrrgv.
 - Confirm the form is active in Formspree.
+- Confirm the Formspree Discord workflow is enabled.
+- Confirm the Discord webhook still exists and points to the cityplug-enquiries channel.
 
-## Part 5 - Photos And File Uploads
+## Part 6 - Photos And File Uploads
 
 The site currently says:
 
@@ -100,7 +137,7 @@ Do not add public file upload unless you really need it. Public upload forms cre
 
 For this business, it is better to collect the enquiry first. Then reply from info@cityplug.co.uk and ask the customer to send photos if needed.
 
-## Part 6 - Optional Privacy Line
+## Part 7 - Optional Privacy Line
 
 A small privacy line near the form is a good idea because the form collects names, email addresses, phone numbers and job details.
 
@@ -110,21 +147,25 @@ We only use your details to respond to your enquiry and arrange your quote.
 
 If you want this added to the site, place it below the Send enquiry button or near the form notes.
 
-## Part 7 - Security Checklist
+## Part 8 - Security Checklist
 
 Before launch, confirm:
 
 - Formspree form xvgqrrgv is owned by the correct account.
 - info@cityplug.co.uk is the verified recipient.
+- A private Discord channel exists for CityPlug enquiries.
+- Formspree has a Discord workflow connected to that channel webhook.
 - Spam protection or captcha is enabled in Formspree.
 - A real test enquiry works from the live Cloudflare Pages website.
 - The test email arrives at info@cityplug.co.uk.
+- The test Discord webhook message arrives in the dedicated enquiries channel.
 - The form does not ask users to upload files.
 - The site does not expose any private API keys.
+- The site does not expose the Discord webhook URL.
 - Cloudflare Pages is connected to the correct GitHub repo.
 - The live site updates after pushing changes to GitHub.
 
-## Part 8 - Longer-Term Better Setup
+## Part 9 - Longer-Term Better Setup
 
 The best long-term setup is:
 
@@ -142,5 +183,4 @@ For now, Formspree is acceptable if:
 
 ## Final Launch Rule
 
-Do not treat the form as working until you have received a real test enquiry at info@cityplug.co.uk from the live website.
-
+Do not treat the form as working until you have received a real test enquiry at info@cityplug.co.uk and in the dedicated Discord enquiries channel from the live website.

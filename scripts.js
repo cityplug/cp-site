@@ -4,6 +4,7 @@ const navToggle = document.querySelector("[data-nav-toggle]");
 const messageInput = document.getElementById("message");
 const charUsed = document.getElementById("char-used");
 const contactForm = document.getElementById("contact-form");
+const formStatus = document.querySelector("[data-form-status]");
 const currentYear = document.querySelector("[data-current-year]");
 
 function updateHeaderState() {
@@ -46,11 +47,61 @@ if (messageInput && charUsed) {
 }
 
 if (contactForm) {
-  contactForm.addEventListener("submit", (event) => {
+  const submitButton = contactForm.querySelector('button[type="submit"]');
+  const defaultButtonText = submitButton ? submitButton.textContent : "";
+
+  const setFormStatus = (message, type) => {
+    if (!formStatus) return;
+    formStatus.textContent = message;
+    formStatus.classList.remove("is-success", "is-error");
+
+    if (type) {
+      formStatus.classList.add(`is-${type}`);
+    }
+  };
+
+  contactForm.addEventListener("submit", async (event) => {
     const trap = contactForm.querySelector('input[name="_gotcha"]');
 
     if (trap && trap.value.trim() !== "") {
       event.preventDefault();
+      contactForm.reset();
+      if (charUsed) charUsed.textContent = "0";
+      setFormStatus("", "");
+      return;
+    }
+
+    event.preventDefault();
+    setFormStatus("", "");
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Sending...";
+    }
+
+    try {
+      const response = await fetch(contactForm.action, {
+        method: "POST",
+        body: new FormData(contactForm),
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Formspree rejected the submission");
+      }
+
+      contactForm.reset();
+      if (charUsed) charUsed.textContent = "0";
+      setFormStatus("Thanks. Your enquiry has been sent and we will reply as soon as possible.", "success");
+    } catch (error) {
+      setFormStatus("Something went wrong. Please try again or email info@cityplug.co.uk.", "error");
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = defaultButtonText;
+      }
     }
   });
 }

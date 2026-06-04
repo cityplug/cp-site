@@ -516,7 +516,8 @@ h3 {
 }
 
 .form-row.full,
-.quote-form button {
+.quote-form button,
+.form-status {
   grid-column: 1 / -1;
 }
 
@@ -565,6 +566,26 @@ h3 {
 .quote-form button:hover {
   background: var(--cyan);
   color: var(--ink);
+}
+
+.quote-form button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.form-status {
+  min-height: 1.4rem;
+  margin: -0.2rem 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.9rem;
+}
+
+.form-status.is-success {
+  color: #65f0b3;
+}
+
+.form-status.is-error {
+  color: #ffb3b3;
 }
 
 .site-footer {
