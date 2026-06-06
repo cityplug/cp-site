@@ -30,6 +30,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 86px;
 }
 
 body {
@@ -584,6 +585,7 @@ h3 {
   gap: 3rem;
   background: var(--panel);
   color: var(--white);
+  scroll-margin-top: 86px;
 }
 
 .contact-copy {

@@ -49,6 +49,7 @@ if (messageInput && charUsed) {
 if (contactForm) {
   const submitButton = contactForm.querySelector('button[type="submit"]');
   const defaultButtonText = submitButton ? submitButton.textContent : "";
+  let isNativeSubmit = false;
 
   const setFormStatus = (message, type) => {
     if (!formStatus) return;
@@ -61,6 +62,10 @@ if (contactForm) {
   };
 
   contactForm.addEventListener("submit", async (event) => {
+    if (isNativeSubmit) {
+      return;
+    }
+
     const trap = contactForm.querySelector('input[name="_gotcha"]');
 
     if (trap && trap.value.trim() !== "") {
@@ -96,7 +101,9 @@ if (contactForm) {
       if (charUsed) charUsed.textContent = "0";
       setFormStatus("Thanks. Your enquiry has been sent and we will reply as soon as possible.", "success");
     } catch (error) {
-      setFormStatus("Something went wrong. Please try again or email info@cityplug.co.uk.", "error");
+      setFormStatus("Submitting securely. If this does not continue, email info@cityplug.co.uk.", "");
+      isNativeSubmit = true;
+      contactForm.submit();
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
