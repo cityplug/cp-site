@@ -189,6 +189,37 @@ class SiteTests(unittest.TestCase):
                 re.search(r"(?m)^\s*\d+\|", source),
                 f"{name}: generated line-number prefix leaked into HTML",
             )
+
+    def test_homepage_visual_polish_is_scoped_and_high_contrast(self):
+        home_body = next(attrs for tag, attrs in parse("index.html").tags if tag == "body")
+        self.assertIn("home-page", home_body.get("class", "").split())
+
+        for name in PUBLIC_PAGES[1:] + ["privacy.html", "404.html"]:
+            body = next(attrs for tag, attrs in parse(name).tags if tag == "body")
+            self.assertNotIn("home-page", body.get("class", "").split(), name)
+
+        css = (ROOT / "index.css").read_text(encoding="utf-8")
+        match = re.search(
+            r"\.home-page\s+\.eyebrow\.dark\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})",
+            css,
+            re.DOTALL,
+        )
+        if match is None:
+            self.fail("Homepage dark eyebrow needs an explicit colour")
+
+        def luminance(hex_colour):
+            channels = [int(hex_colour[index:index + 2], 16) / 255 for index in (1, 3, 5)]
+            linear = [
+                value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
+                for value in channels
+            ]
+            return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+        foreground = luminance(match.group(1))
+        background = luminance("#f4f7fa")
+        contrast = (max(foreground, background) + 0.05) / (min(foreground, background) + 0.05)
+        self.assertGreaterEqual(contrast, 4.5)
+
     def test_landmarks_have_unique_accessible_names(self):
         for name in PUBLIC_PAGES:
             document = parse(name)
