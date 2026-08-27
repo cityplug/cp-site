@@ -6,6 +6,22 @@ const charUsed = document.getElementById("char-used");
 const contactForm = document.getElementById("contact-form");
 const formStatus = document.querySelector("[data-form-status]");
 const currentYear = document.querySelector("[data-current-year]");
+const serviceSelect = document.getElementById("service");
+
+if (serviceSelect) {
+  const searchParams = new URLSearchParams(window.location.search);
+  const requestedService = searchParams.get("service");
+  const serviceOptions = {
+    cctv: "CCTV installation",
+    wifi: "Home Wi-Fi improvement",
+    business: "Small business Wi-Fi",
+    cabling: "Structured cabling",
+  };
+
+  if (requestedService && serviceOptions[requestedService]) {
+    serviceSelect.value = serviceOptions[requestedService];
+  }
+}
 
 function updateHeaderState() {
   if (!header) return;
@@ -20,20 +36,31 @@ if (currentYear) {
 }
 
 if (navToggle && nav && header) {
+  const closeNavigation = ({ restoreFocus = false } = {}) => {
+    nav.classList.remove("is-open");
+    header.classList.remove("nav-active");
+    document.body.classList.remove("nav-open");
+    navToggle.setAttribute("aria-expanded", "false");
+    navToggle.setAttribute("aria-label", "Open navigation");
+    if (restoreFocus) navToggle.focus();
+  };
+
   navToggle.addEventListener("click", () => {
     const isOpen = nav.classList.toggle("is-open");
     navToggle.setAttribute("aria-expanded", String(isOpen));
+    navToggle.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation");
     header.classList.toggle("nav-active", isOpen);
     document.body.classList.toggle("nav-open", isOpen);
   });
 
   nav.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
-      nav.classList.remove("is-open");
-      header.classList.remove("nav-active");
-      document.body.classList.remove("nav-open");
-      navToggle.setAttribute("aria-expanded", "false");
-    });
+    link.addEventListener("click", () => closeNavigation());
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && nav.classList.contains("is-open")) {
+      closeNavigation({ restoreFocus: true });
+    }
   });
 }
 

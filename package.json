@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "serve": "python3 -m http.server 8788"
+    "serve": "python3 preview_server.py --port 8788 --bind 0.0.0.0",
+    "test": "python3 -m unittest discover -s tests -v"
   }
 }
