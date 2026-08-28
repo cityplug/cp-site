@@ -265,6 +265,90 @@ class SiteTests(unittest.TestCase):
         contrast = (max(foreground, background) + 0.05) / (min(foreground, background) + 0.05)
         self.assertGreaterEqual(contrast, 4.5)
 
+    def test_service_pages_share_the_approved_system_and_remain_distinct(self):
+        variants = {
+            "cctv-installation-london.html": "service-cctv",
+            "wifi-installation-south-london.html": "service-wifi",
+            "business-wifi-network-cabling-london.html": "service-business",
+        }
+        required_routes = {
+            "/cctv-installation-london",
+            "/wifi-installation-south-london",
+            "/business-wifi-network-cabling-london",
+        }
+
+        for name, variant in variants.items():
+            document = parse(name)
+            body = next(attrs for tag, attrs in document.tags if tag == "body")
+            classes = body.get("class", "").split()
+            self.assertIn("service-page", classes, name)
+            self.assertIn(variant, classes, name)
+
+            source = (ROOT / name).read_text(encoding="utf-8")
+            self.assertIn('data-service-visual', source, f"{name}: missing service-specific visual")
+            self.assertIn('class="footer-main"', source, f"{name}: compact footer remains")
+            self.assertEqual(source.count('href="/privacy"'), 1, f"{name}: duplicate privacy footer link")
+
+            footer_navs = [
+                attrs for tag, attrs in document.tags
+                if tag == "nav" and attrs.get("aria-label") == "Footer services"
+            ]
+            self.assertEqual(len(footer_navs), 1, f"{name}: missing full service footer navigation")
+            footer_links = {
+                attrs.get("href") for tag, attrs in document.tags
+                if tag == "a" and attrs.get("href") in required_routes
+            }
+            self.assertEqual(footer_links, required_routes, f"{name}: incomplete service footer links")
+
+        for name in ["privacy.html", "404.html"]:
+            body = next(attrs for tag, attrs in parse(name).tags if tag == "body")
+            self.assertNotIn("service-page", body.get("class", "").split(), name)
+
+        css = (ROOT / "index.css").read_text(encoding="utf-8")
+        for selector in (
+            ".service-page .service-hero",
+            ".service-page .service-panel",
+            ".service-page .cta-strip",
+            ".service-page .footer-main",
+            ".service-cctv .service-visual",
+            ".service-wifi .service-visual",
+            ".service-business .service-visual",
+        ):
+            self.assertIn(selector, css, f"missing shared or differentiated style: {selector}")
+
+        helper_variants = {
+            "cctv-view-grid": "service-cctv",
+            "visual-flow": "service-cctv",
+            "wifi-plan": "service-wifi",
+            "wifi-node": "service-wifi",
+            "node-router": "service-wifi",
+            "node-upstairs": "service-wifi",
+            "node-garden": "service-wifi",
+            "wifi-link": "service-wifi",
+            "link-one": "service-wifi",
+            "link-two": "service-wifi",
+            "network-groups": "service-business",
+            "device-row": "service-business",
+            "port-bank": "service-business",
+        }
+
+        def assert_helpers_are_variant_scoped(css_text):
+            individual_selectors = [
+                selector.strip()
+                for block in re.findall(r"([^{}]+)\{", css_text)
+                for selector in block.split(",")
+            ]
+            for helper, variant in helper_variants.items():
+                helper_pattern = re.compile(rf"\.{re.escape(helper)}(?![\w-])")
+                matching = [selector for selector in individual_selectors if helper_pattern.search(selector)]
+                self.assertTrue(matching, f"missing illustration helper: {helper}")
+                for selector in matching:
+                    self.assertIn(f".{variant}", selector, f"unscoped {helper} selector: {selector}")
+
+        assert_helpers_are_variant_scoped(css)
+        with self.assertRaises(AssertionError):
+            assert_helpers_are_variant_scoped(css + "\n.service-wifi .wifi-node, .wifi-node { color: red; }")
+
     def test_delivery_assets_are_optimized_and_prioritized(self):
         optimized_images = [
             "assets/city_hero-768.avif",
