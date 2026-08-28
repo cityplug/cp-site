@@ -67,11 +67,23 @@ class SiteTests(unittest.TestCase):
 
     def test_every_public_page_links_to_a_real_privacy_notice(self):
         self.assertTrue((ROOT / "privacy.html").is_file(), "privacy.html is missing")
-        privacy = (ROOT / "privacy.html").read_text(encoding="utf-8").lower()
-        self.assertIn("formspree", privacy)
-        self.assertIn("discord", privacy)
-        self.assertIn("confirm before publication", privacy)
-        self.assertIn("privacy", privacy)
+        privacy = (ROOT / "privacy.html").read_text(encoding="utf-8")
+        privacy_lower = privacy.lower()
+        self.assertIn("formspree", privacy_lower)
+        self.assertIn("privacy and your personal information", privacy_lower)
+        self.assertIn("delivers the enquiry to cityplug", privacy_lower)
+        self.assertIn("service you need", privacy_lower)
+        for editorial_marker in (
+            "confirm before publication",
+            "must confirm whether",
+            "optional private discord",
+            "private business inbox",
+            "authorised members",
+            "access to that inbox",
+            "access limited",
+        ):
+            self.assertNotIn(editorial_marker, privacy_lower)
+        self.assertIn("privacy", privacy_lower)
         for name in PUBLIC_PAGES:
             links = [attrs.get("href") for tag, attrs in parse(name).tags if tag == "a"]
             self.assertIn("/privacy", links, name)
