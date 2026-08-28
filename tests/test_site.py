@@ -118,9 +118,54 @@ class SiteTests(unittest.TestCase):
             visible = " ".join(parse(name).text)
             for phrase in banned:
                 self.assertNotIn(phrase, visible, f"{name}: {phrase}")
+
+    def test_homepage_supporting_copy_is_not_repeated(self):
+        visible = " ".join(parse("index.html").text).lower()
+        source = (ROOT / "index.html").read_text(encoding="utf-8").lower()
+        self.assertLessEqual(source.count("2017"), 1)
+        maximum_counts = {
+            "since 2017": 1,
+            "south london": 3,
+            "after the first reply": 1,
+            "cable routes": 2,
+            "planned around": 1,
+            "start with the problem": 1,
+            "wired cctv, whole-home wi-fi and network cabling for homes and small businesses": 1,
+            "the first part of the postcode": 1,
+            "wired backhaul": 1,
+            "guest wi-fi": 1,
+            "office device cabling": 1,
+        }
+        for phrase, maximum in maximum_counts.items():
+            self.assertLessEqual(
+                visible.count(phrase),
+                maximum,
+                f"Homepage repeats {phrase!r} more than {maximum} time(s)",
+            )
         homepage = " ".join(parse("index.html").text).lower()
         self.assertLessEqual(homepage.count("london, kent and the m25 area"), 1)
         self.assertLessEqual(homepage.count("free quote"), 5)
+
+    def test_service_pages_do_not_repeat_location_summaries(self):
+        for name in PUBLIC_PAGES[1:]:
+            document = parse(name)
+            visible = " ".join(document.text).lower()
+            self.assertLessEqual(
+                visible.count("london, kent"),
+                1,
+                f"{name}: repeats the same service-area claim",
+            )
+            self.assertFalse(
+                any("service-areas" in attrs.get("class", "") for _, attrs in document.tags),
+                f"{name}: repeats service areas as decorative chips",
+            )
+
+        business = " ".join(parse("business-wifi-network-cabling-london.html").text).lower()
+        self.assertLessEqual(business.count("planned around"), 1)
+        self.assertNotIn("weekend or quieter-hour slots may be available", business)
+
+        cctv = " ".join(parse("cctv-installation-london.html").text).lower()
+        self.assertLessEqual(cctv.count("cable routes"), 2)
 
     def test_service_pages_answer_service_specific_decisions(self):
         expected = {
