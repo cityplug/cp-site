@@ -1,13 +1,15 @@
 @font-face {
   font-family: "Poppins";
-  src: url("assets/poppins/Poppins-Regular.ttf") format("truetype");
+  src: url("assets/poppins/Poppins-Regular.woff2") format("woff2");
   font-weight: 400;
+  font-display: swap;
 }
 
 @font-face {
   font-family: "Poppins";
-  src: url("assets/poppins/Poppins-Bold.ttf") format("truetype");
+  src: url("assets/poppins/Poppins-Bold.woff2") format("woff2");
   font-weight: 700;
+  font-display: swap;
 }
 
 :root {
@@ -22,6 +24,26 @@
   --night: #111923;
   --panel: #172230;
   --shadow: 0 18px 45px rgba(13, 27, 42, 0.14);
+  --city-hero-image: image-set(
+    url("assets/city_hero-1536.avif") type("image/avif"),
+    url("assets/city_hero-1536.webp") type("image/webp"),
+    url("assets/city_hero.png") type("image/png")
+  );
+  --rooftop-image: image-set(
+    url("assets/satalite_rooftop-768.avif") type("image/avif"),
+    url("assets/satalite_rooftop-768.webp") type("image/webp"),
+    url("assets/satalite_rooftop.png") type("image/png")
+  );
+}
+
+@media (max-width: 620px) {
+  :root {
+    --city-hero-image: image-set(
+      url("assets/city_hero-768.avif") type("image/avif"),
+      url("assets/city_hero-768.webp") type("image/webp"),
+      url("assets/city_hero.png") type("image/png")
+    );
+  }
 }
 
 * {
@@ -195,7 +217,7 @@ textarea:focus-visible {
   align-items: center;
   padding: 8rem 5vw 5rem;
   color: var(--white);
-  background: url("assets/city_hero.png") center / cover no-repeat;
+  background: var(--city-hero-image) center / cover no-repeat;
   overflow: hidden;
 }
 
@@ -383,7 +405,7 @@ h3 {
   align-items: center;
   padding: 8rem 5vw 4rem;
   color: var(--white);
-  background: url("assets/city_hero.png") center / cover no-repeat;
+  background: var(--city-hero-image) center / cover no-repeat;
   overflow: hidden;
 }
 
@@ -514,14 +536,18 @@ h3 {
   color: var(--white);
   background:
     linear-gradient(180deg, rgba(18, 28, 40, 0.1), rgba(18, 28, 40, 0.95)),
-    url("assets/city_hero.png") center / cover no-repeat;
+    var(--city-hero-image) center / cover no-repeat;
   box-shadow: var(--shadow);
 }
 
 .business-panel {
+  background: linear-gradient(180deg, #172230, #080d14);
+}
+
+.business-panel.background-ready {
   background:
     linear-gradient(180deg, rgba(8, 13, 20, 0.48), rgba(8, 13, 20, 0.98)),
-    url("assets/satalite_rooftop.png") center / cover no-repeat;
+    var(--rooftop-image) center / cover no-repeat;
 }
 
 .business-panel strong,
@@ -531,9 +557,13 @@ h3 {
 }
 
 .service-area-panel {
+  background: linear-gradient(180deg, #172230, #080d14);
+}
+
+.service-area-panel.background-ready {
   background:
     linear-gradient(180deg, rgba(8, 13, 20, 0.5), rgba(8, 13, 20, 0.98)),
-    url("assets/satalite_rooftop.png") center / cover no-repeat;
+    var(--rooftop-image) center / cover no-repeat;
 }
 
 .service-area-panel strong,

@@ -265,6 +265,50 @@ class SiteTests(unittest.TestCase):
         contrast = (max(foreground, background) + 0.05) / (min(foreground, background) + 0.05)
         self.assertGreaterEqual(contrast, 4.5)
 
+    def test_delivery_assets_are_optimized_and_prioritized(self):
+        optimized_images = [
+            "assets/city_hero-768.avif",
+            "assets/city_hero-1536.avif",
+            "assets/city_hero-768.webp",
+            "assets/city_hero-1536.webp",
+            "assets/satalite_rooftop-768.avif",
+            "assets/satalite_rooftop-768.webp",
+            "assets/city_hero-social.jpg",
+        ]
+        for asset in optimized_images:
+            path = ROOT / asset
+            self.assertTrue(path.is_file(), f"missing optimized image: {asset}")
+            self.assertLess(path.stat().st_size, 500_000, f"oversized optimized image: {asset}")
+
+        css = (ROOT / "index.css").read_text(encoding="utf-8")
+        self.assertIn("image-set(", css)
+        self.assertIn("city_hero-1536.avif", css)
+        self.assertIn("satalite_rooftop-768.avif", css)
+        self.assertIn('format("woff2")', css)
+        self.assertIn("font-display: swap", css)
+        self.assertNotIn('format("truetype")', css)
+
+        for name in PUBLIC_PAGES + ["privacy.html", "404.html"]:
+            source = (ROOT / name).read_text(encoding="utf-8")
+            if name in PUBLIC_PAGES:
+                self.assertIn("assets/city_hero-social.jpg", source, f"{name}: oversized social image remains")
+            links = [attrs for tag, attrs in parse(name).tags if tag == "link"]
+            hero_preloads = [
+                attrs for attrs in links
+                if "preload" in attrs.get("rel", "").split()
+                and attrs.get("as") == "image"
+                and attrs.get("fetchpriority") == "high"
+                and "city_hero" in attrs.get("href", "")
+            ]
+            self.assertTrue(hero_preloads, f"{name}: optimized hero is not prioritized")
+
+    def test_below_fold_decorative_backgrounds_are_lazy_loaded(self):
+        homepage = (ROOT / "index.html").read_text(encoding="utf-8")
+        script = (ROOT / "scripts.js").read_text(encoding="utf-8")
+        self.assertGreaterEqual(homepage.count("data-lazy-background"), 2)
+        self.assertIn("IntersectionObserver", script)
+        self.assertIn("background-ready", script)
+
     def test_landmarks_have_unique_accessible_names(self):
         for name in PUBLIC_PAGES:
             document = parse(name)

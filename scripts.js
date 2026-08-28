@@ -147,6 +147,9 @@ if ("IntersectionObserver" in window) {
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
+          if (entry.target.hasAttribute("data-lazy-background")) {
+            entry.target.classList.add("background-ready");
+          }
           entry.target.classList.add("is-visible");
           revealObserver.unobserve(entry.target);
         }
@@ -157,5 +160,10 @@ if ("IntersectionObserver" in window) {
 
   revealItems.forEach((item) => revealObserver.observe(item));
 } else {
-  revealItems.forEach((item) => item.classList.add("is-visible"));
+  revealItems.forEach((item) => {
+    if (item.hasAttribute("data-lazy-background")) {
+      item.classList.add("background-ready");
+    }
+    item.classList.add("is-visible");
+  });
 }
