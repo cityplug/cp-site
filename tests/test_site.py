@@ -12,6 +12,7 @@ PUBLIC_PAGES = [
     "wifi-installation-south-london.html",
     "business-wifi-network-cabling-london.html",
 ]
+ALL_PUBLIC_PAGES = PUBLIC_PAGES + ["privacy.html", "404.html"]
 
 
 class Document(HTMLParser):
@@ -51,6 +52,19 @@ def parse(name):
 
 
 class SiteTests(unittest.TestCase):
+    def test_every_logo_returns_to_the_homepage(self):
+        for name in ALL_PUBLIC_PAGES:
+            anchors = [attrs for tag, attrs in parse(name).tags if tag == "a"]
+            for logo_class in ("brand", "footer-brand"):
+                logos = [
+                    attrs
+                    for attrs in anchors
+                    if logo_class in attrs.get("class", "").split()
+                ]
+                self.assertEqual(len(logos), 1, f"{name}: expected one {logo_class} link")
+                self.assertEqual(logos[0].get("href"), "/", f"{name}: {logo_class} must link home")
+                self.assertEqual(logos[0].get("aria-label"), "CityPlug home", f"{name}: inaccessible {logo_class}")
+
     def test_every_public_page_links_to_a_real_privacy_notice(self):
         self.assertTrue((ROOT / "privacy.html").is_file(), "privacy.html is missing")
         privacy = (ROOT / "privacy.html").read_text(encoding="utf-8").lower()
