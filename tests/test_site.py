@@ -70,9 +70,19 @@ class SiteTests(unittest.TestCase):
         privacy = (ROOT / "privacy.html").read_text(encoding="utf-8")
         privacy_lower = privacy.lower()
         self.assertIn("formspree", privacy_lower)
+        self.assertNotIn("discord", privacy_lower)
         self.assertIn("privacy and your personal information", privacy_lower)
         self.assertIn("delivers the enquiry to cityplug", privacy_lower)
-        self.assertIn("service you need", privacy_lower)
+        for disclosed_form_field in (
+            "name",
+            "email address",
+            "optional phone number",
+            "service you need",
+            "postcode area",
+            "preferred availability",
+            "details about the property or work required",
+        ):
+            self.assertIn(disclosed_form_field, privacy_lower)
         for editorial_marker in (
             "confirm before publication",
             "must confirm whether",
