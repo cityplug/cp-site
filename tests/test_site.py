@@ -73,6 +73,9 @@ class SiteTests(unittest.TestCase):
         self.assertNotIn("discord", privacy_lower)
         self.assertIn("privacy and your personal information", privacy_lower)
         self.assertIn("delivers the enquiry to cityplug", privacy_lower)
+        self.assertIn("six months after the last contact", privacy_lower)
+        self.assertIn("advertising or tracking cookies", privacy_lower)
+        self.assertIn("unless you ask cityplug to do so", privacy_lower)
         for disclosed_form_field in (
             "name",
             "email address",
