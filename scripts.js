@@ -14,7 +14,7 @@ if (serviceSelect) {
   const serviceOptions = {
     cctv: "CCTV installation",
     wifi: "Home Wi-Fi improvement",
-    business: "Small business Wi-Fi",
+    business: "Business Wi-Fi",
     cabling: "Structured cabling",
   };
 

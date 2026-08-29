@@ -160,6 +160,26 @@ class SiteTests(unittest.TestCase):
             for phrase in banned:
                 self.assertNotIn(phrase, visible, f"{name}: {phrase}")
 
+    def test_business_copy_does_not_impose_an_unnecessary_size_ceiling(self):
+        limiting_phrases = (
+            "small business",
+            "small-business",
+            "small commercial site",
+            "small site",
+            "small office",
+            "small hospitality",
+            "small warehouse",
+        )
+        for name in (
+            "index.html",
+            "cctv-installation-london.html",
+            "business-wifi-network-cabling-london.html",
+            "scripts.js",
+        ):
+            source = (ROOT / name).read_text(encoding="utf-8").lower()
+            for phrase in limiting_phrases:
+                self.assertNotIn(phrase, source, f"{name}: {phrase}")
+
     def test_homepage_supporting_copy_is_not_repeated(self):
         visible = " ".join(parse("index.html").text).lower()
         source = (ROOT / "index.html").read_text(encoding="utf-8").lower()
@@ -171,7 +191,7 @@ class SiteTests(unittest.TestCase):
             "cable routes": 2,
             "planned around": 1,
             "start with the problem": 1,
-            "wired cctv, whole-home wi-fi and network cabling for homes and small businesses": 1,
+            "wired cctv, whole-home wi-fi and network cabling for homes and businesses": 1,
             "the first part of the postcode": 1,
             "wired backhaul": 1,
             "guest wi-fi": 1,
