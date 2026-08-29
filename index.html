@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="preload" as="image" href="/assets/city_hero-768.avif" type="image/avif" media="(max-width: 620px)" fetchpriority="high" />
-  <link rel="preload" as="image" href="/assets/city_hero-1536.avif" type="image/avif" media="(min-width: 621px)" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/city_hero-768.avif" type="image/avif" media="(max-width: 620px) and (resolution &lt; 2.5dppx)" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/city_hero-1536.avif" type="image/avif" media="(max-width: 620px) and (min-resolution: 2.5dppx)" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/city_hero-1536.avif" type="image/avif" media="(620px &lt; width &lt; 1800px) and (max-resolution: 1dppx)" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/city_hero-3840.avif" type="image/avif" media="(620px &lt; width &lt; 1800px) and (resolution > 1dppx)" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/city_hero-3840.avif" type="image/avif" media="(min-width: 1800px)" fetchpriority="high" />
   <meta name="description" content="CityPlug installs wired CCTV, whole-home Wi-Fi and network cabling for homes and businesses across London and selected areas of Kent." />
   <title>CityPlug | CCTV &amp; Wi-Fi Installation London</title>
   <link rel="canonical" href="https://www.cityplug.co.uk/" />
@@ -78,7 +81,7 @@
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="site-header" data-header>
     <a href="/" class="brand" aria-label="CityPlug home">
-      <img src="assets/fav%20white.png" alt="" />
+      <img src="assets/fav%20white.png" srcset="assets/fav%20white.png 100w, assets/fav-white-300.png 300w" sizes="42px" alt="" />
       <span>CityPlug</span>
     </a>
 
@@ -149,7 +152,7 @@
 
       <div class="service-grid">
         <article class="service-card section-reveal">
-          <img src="assets/camera-icon.png" alt="" />
+          <img src="assets/camera-icon.png" srcset="assets/camera-icon.png 96w, assets/camera-icon-288.png 288w" sizes="52px" alt="" />
           <h3>CCTV installation</h3>
           <p>Wired camera systems planned around entrances, boundaries and the areas that actually need evidence, with recorder setup and mobile viewing handover.</p>
           <ul>
@@ -161,7 +164,7 @@
         </article>
 
         <article class="service-card section-reveal">
-          <img src="assets/ap-icon.png" alt="" />
+          <img src="assets/ap-icon.png" srcset="assets/ap-icon.png 96w, assets/ap-icon-288.png 288w" sizes="52px" alt="" />
           <h3>Whole-home Wi-Fi</h3>
           <p>Access points and wired backhaul for homes where one router cannot provide reliable coverage upstairs, through extensions or into a garden office.</p>
           <ul>
@@ -173,7 +176,7 @@
         </article>
 
         <article class="service-card section-reveal">
-          <img src="assets/cabling-icon.png" alt="" />
+          <img src="assets/cabling-icon.png" srcset="assets/cabling-icon.png 96w, assets/cabling-icon-288.png 288w" sizes="52px" alt="" />
           <h3>Business Wi-Fi and cabling</h3>
           <p>Practical Wi-Fi and cabling for offices, salons, retail units, cafés and workshops where staff, guests and fixed devices have different needs.</p>
           <ul>
@@ -327,7 +330,7 @@
     <div class="footer-inner">
       <div class="footer-top">
         <a href="/" class="footer-brand" aria-label="CityPlug home">
-          <img src="assets/fav%20white.png" alt="" />
+          <img src="assets/fav%20white.png" srcset="assets/fav%20white.png 100w, assets/fav-white-300.png 300w" sizes="42px" alt="" />
           <span>CityPlug</span>
         </a>
         <a href="mailto:info@cityplug.co.uk" class="footer-email">info@cityplug.co.uk</a>

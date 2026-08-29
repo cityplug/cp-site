@@ -447,6 +447,56 @@ class SiteTests(unittest.TestCase):
             ]
             self.assertTrue(hero_preloads, f"{name}: optimized hero is not prioritized")
 
+    def test_hd_assets_and_density_aware_delivery_are_present(self):
+        hd_assets = (
+            "assets/city_hero-3840.avif",
+            "assets/city_hero-3840.webp",
+            "assets/satalite_rooftop-1536.avif",
+            "assets/satalite_rooftop-1536.webp",
+            "assets/satalite_rooftop-3072.avif",
+            "assets/satalite_rooftop-3072.webp",
+            "assets/fav-white-300.png",
+            "assets/ap-icon-288.png",
+            "assets/cabling-icon-288.png",
+            "assets/camera-icon-288.png",
+        )
+        for asset in hd_assets:
+            path = ROOT / asset
+            self.assertTrue(path.is_file(), f"missing HD asset: {asset}")
+            self.assertLess(path.stat().st_size, 2_000_000, f"oversized HD asset: {asset}")
+
+        css = (ROOT / "index.css").read_text(encoding="utf-8")
+        self.assertIn("city_hero-3840.avif", css)
+        self.assertIn("satalite_rooftop-3072.avif", css)
+        self.assertIn("min-width: 1800px", css)
+        self.assertIn("min-resolution: 2.5dppx", css)
+        self.assertIn("2x", css)
+
+        expected_preloads = {
+            ("/assets/city_hero-768.avif", "(max-width: 620px) and (resolution < 2.5dppx)"),
+            ("/assets/city_hero-1536.avif", "(max-width: 620px) and (min-resolution: 2.5dppx)"),
+            ("/assets/city_hero-1536.avif", "(620px < width < 1800px) and (max-resolution: 1dppx)"),
+            ("/assets/city_hero-3840.avif", "(620px < width < 1800px) and (resolution > 1dppx)"),
+            ("/assets/city_hero-3840.avif", "(min-width: 1800px)"),
+        }
+        for name in PUBLIC_PAGES + ["privacy.html", "404.html"]:
+            source = (ROOT / name).read_text(encoding="utf-8")
+            self.assertNotIn("imagesrcset", source, name)
+            links = [attrs for tag, attrs in parse(name).tags if tag == "link"]
+            actual_preloads = {
+                (attrs.get("href"), attrs.get("media"))
+                for attrs in links
+                if "preload" in attrs.get("rel", "").split()
+                and attrs.get("as") == "image"
+                and "city_hero" in attrs.get("href", "")
+            }
+            self.assertEqual(actual_preloads, expected_preloads, name)
+            self.assertIn("fav-white-300.png 300w", source, name)
+
+        homepage = (ROOT / "index.html").read_text(encoding="utf-8")
+        for asset in ("ap-icon-288.png", "cabling-icon-288.png", "camera-icon-288.png"):
+            self.assertIn(f"{asset} 288w", homepage)
+
     def test_below_fold_decorative_backgrounds_are_lazy_loaded(self):
         homepage = (ROOT / "index.html").read_text(encoding="utf-8")
         script = (ROOT / "scripts.js").read_text(encoding="utf-8")

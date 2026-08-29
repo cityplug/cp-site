@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="preload" as="image" href="/assets/city_hero-768.avif" type="image/avif" media="(max-width: 620px)" fetchpriority="high" />
-  <link rel="preload" as="image" href="/assets/city_hero-1536.avif" type="image/avif" media="(min-width: 621px)" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/city_hero-768.avif" type="image/avif" media="(max-width: 620px) and (resolution &lt; 2.5dppx)" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/city_hero-1536.avif" type="image/avif" media="(max-width: 620px) and (min-resolution: 2.5dppx)" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/city_hero-1536.avif" type="image/avif" media="(620px &lt; width &lt; 1800px) and (max-resolution: 1dppx)" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/city_hero-3840.avif" type="image/avif" media="(620px &lt; width &lt; 1800px) and (resolution > 1dppx)" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/city_hero-3840.avif" type="image/avif" media="(min-width: 1800px)" fetchpriority="high" />
   <meta name="description" content="Business Wi-Fi and structured cabling for London shops, salons, cafés, offices and commercial sites, including guest networks and device connections." />
   <title>Business Wi-Fi &amp; Network Cabling London | CityPlug</title>
   <link rel="canonical" href="https://www.cityplug.co.uk/business-wifi-network-cabling-london" />
@@ -38,7 +41,7 @@
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="site-header" data-header>
     <a href="/" class="brand" aria-label="CityPlug home">
-      <img src="assets/fav%20white.png" alt="" />
+      <img src="assets/fav%20white.png" srcset="assets/fav%20white.png 100w, assets/fav-white-300.png 300w" sizes="42px" alt="" />
       <span>CityPlug</span>
     </a>
 
@@ -163,7 +166,7 @@
     <div class="footer-inner">
       <div class="footer-top">
         <a href="/" class="footer-brand" aria-label="CityPlug home">
-          <img src="assets/fav%20white.png" alt="" />
+          <img src="assets/fav%20white.png" srcset="assets/fav%20white.png 100w, assets/fav-white-300.png 300w" sizes="42px" alt="" />
           <span>CityPlug</span>
         </a>
         <a href="mailto:info@cityplug.co.uk" class="footer-email">info@cityplug.co.uk</a>

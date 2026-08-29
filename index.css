@@ -25,23 +25,62 @@
   --panel: #172230;
   --shadow: 0 18px 45px rgba(13, 27, 42, 0.14);
   --city-hero-image: image-set(
-    url("assets/city_hero-1536.avif") type("image/avif"),
-    url("assets/city_hero-1536.webp") type("image/webp"),
-    url("assets/city_hero.png") type("image/png")
+    url("assets/city_hero-1536.avif") type("image/avif") 1x,
+    url("assets/city_hero-3840.avif") type("image/avif") 2x,
+    url("assets/city_hero-1536.webp") type("image/webp") 1x,
+    url("assets/city_hero-3840.webp") type("image/webp") 2x,
+    url("assets/city_hero.png") type("image/png") 1x
   );
   --rooftop-image: image-set(
-    url("assets/satalite_rooftop-768.avif") type("image/avif"),
-    url("assets/satalite_rooftop-768.webp") type("image/webp"),
-    url("assets/satalite_rooftop.png") type("image/png")
+    url("assets/satalite_rooftop-1536.avif") type("image/avif") 1x,
+    url("assets/satalite_rooftop-3072.avif") type("image/avif") 2x,
+    url("assets/satalite_rooftop-1536.webp") type("image/webp") 1x,
+    url("assets/satalite_rooftop-3072.webp") type("image/webp") 2x,
+    url("assets/satalite_rooftop.png") type("image/png") 1x
   );
 }
 
 @media (max-width: 620px) {
   :root {
     --city-hero-image: image-set(
-      url("assets/city_hero-768.avif") type("image/avif"),
-      url("assets/city_hero-768.webp") type("image/webp"),
-      url("assets/city_hero.png") type("image/png")
+      url("assets/city_hero-768.avif") type("image/avif") 1x,
+      url("assets/city_hero-768.webp") type("image/webp") 1x,
+      url("assets/city_hero.png") type("image/png") 1x
+    );
+    --rooftop-image: image-set(
+      url("assets/satalite_rooftop-768.avif") type("image/avif") 1x,
+      url("assets/satalite_rooftop-768.webp") type("image/webp") 1x,
+      url("assets/satalite_rooftop.png") type("image/png") 1x
+    );
+  }
+}
+
+@media (max-width: 620px) and (min-resolution: 2.5dppx) {
+  :root {
+    --city-hero-image: image-set(
+      url("assets/city_hero-1536.avif") type("image/avif") 1x,
+      url("assets/city_hero-1536.webp") type("image/webp") 1x,
+      url("assets/city_hero.png") type("image/png") 1x
+    );
+    --rooftop-image: image-set(
+      url("assets/satalite_rooftop-1536.avif") type("image/avif") 1x,
+      url("assets/satalite_rooftop-1536.webp") type("image/webp") 1x,
+      url("assets/satalite_rooftop.png") type("image/png") 1x
+    );
+  }
+}
+
+@media (min-width: 1800px) {
+  :root {
+    --city-hero-image: image-set(
+      url("assets/city_hero-3840.avif") type("image/avif") 1x,
+      url("assets/city_hero-3840.webp") type("image/webp") 1x,
+      url("assets/city_hero.png") type("image/png") 1x
+    );
+    --rooftop-image: image-set(
+      url("assets/satalite_rooftop-3072.avif") type("image/avif") 1x,
+      url("assets/satalite_rooftop-3072.webp") type("image/webp") 1x,
+      url("assets/satalite_rooftop.png") type("image/png") 1x
     );
   }
 }
