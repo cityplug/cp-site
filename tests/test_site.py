@@ -103,6 +103,8 @@ class SiteTests(unittest.TestCase):
             links = [attrs.get("href") for tag, attrs in parse(name).tags if tag == "a"]
             self.assertIn("/privacy", links, name)
     def test_every_public_page_has_complete_share_metadata(self):
+        expected_image = "https://www.cityplug.co.uk/assets/city_hero-social-v2.jpg"
+        expected_alt = "CityPlug logo over a blurred London cityscape"
         for name in PUBLIC_PAGES:
             document = parse(name)
             meta = {
@@ -113,6 +115,14 @@ class SiteTests(unittest.TestCase):
             self.assertLessEqual(len(meta.get("description", "")), 160, name)
             for key in ("og:title", "og:description", "og:url", "og:image", "twitter:card"):
                 self.assertTrue(meta.get(key), f"{name}: missing {key}")
+            self.assertEqual(meta.get("og:image"), expected_image, name)
+            self.assertEqual(meta.get("twitter:image"), expected_image, name)
+            self.assertEqual(meta.get("og:image:width"), "1200", name)
+            self.assertEqual(meta.get("og:image:height"), "630", name)
+            self.assertEqual(meta.get("og:image:type"), "image/jpeg", name)
+            self.assertEqual(meta.get("og:image:alt"), expected_alt, name)
+            self.assertEqual(meta.get("twitter:image:alt"), expected_alt, name)
+        self.assertTrue((ROOT / "assets" / "city_hero-social-v2.jpg").is_file())
 
     def test_service_pages_publish_valid_service_schema(self):
         for name in PUBLIC_PAGES[1:]:
@@ -418,7 +428,7 @@ class SiteTests(unittest.TestCase):
             "assets/city_hero-1536.webp",
             "assets/satalite_rooftop-768.avif",
             "assets/satalite_rooftop-768.webp",
-            "assets/city_hero-social.jpg",
+            "assets/city_hero-social-v2.jpg",
         ]
         for asset in optimized_images:
             path = ROOT / asset
@@ -436,7 +446,7 @@ class SiteTests(unittest.TestCase):
         for name in PUBLIC_PAGES + ["privacy.html", "404.html"]:
             source = (ROOT / name).read_text(encoding="utf-8")
             if name in PUBLIC_PAGES:
-                self.assertIn("assets/city_hero-social.jpg", source, f"{name}: oversized social image remains")
+                self.assertIn("assets/city_hero-social-v2.jpg", source, f"{name}: optimized social image missing")
             links = [attrs for tag, attrs in parse(name).tags if tag == "link"]
             hero_preloads = [
                 attrs for attrs in links
