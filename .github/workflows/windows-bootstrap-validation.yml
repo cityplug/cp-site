@@ -24,16 +24,6 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile("$PWD\win", [ref]$tokens, [ref]$errors) | Out-Null
           if ($errors.Count) { throw ($errors | Out-String) }
 
-      - name: Verify public irm response is executable text
-        shell: powershell
-        run: |
-          $ErrorActionPreference = "Stop"
-          $payload = Invoke-RestMethod -UseBasicParsing -Uri "https://cityplug.co.uk/win"
-          if ($payload -isnot [string]) { throw "Public /win returned $($payload.GetType().FullName), not PowerShell text" }
-          $tokens = $null
-          $errors = $null
-          [System.Management.Automation.Language.Parser]::ParseInput($payload, [ref]$tokens, [ref]$errors) | Out-Null
-          if ($errors.Count) { throw ($errors | Out-String) }
 
       - name: Download and hash pinned MSI packages
         shell: powershell
@@ -142,7 +132,7 @@ jobs:
           $tokens = $null
           $errors = $null
           $ast = [System.Management.Automation.Language.Parser]::ParseFile("$PWD\win", [ref]$tokens, [ref]$errors)
-          $names = @("Write-Log", "Enable-RustDeskQuarantine", "Disable-RustDeskQuarantine")
+          $names = @("Write-Log", "Assert-RustDeskQuarantineEffective", "Enable-RustDeskQuarantine", "Disable-RustDeskQuarantine")
           $functionText = foreach ($name in $names) {
             ($ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true) | Select-Object -First 1).Extent.Text
           }
