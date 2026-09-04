@@ -51,6 +51,13 @@ def parse(name):
     return document
 
 
+def powershell_executable_lines(source):
+    """Drop blank and comment-only lines so safety markers cannot live only in comments."""
+    return "\n".join(
+        line for line in source.splitlines() if line.strip() and not line.lstrip().startswith("#")
+    )
+
+
 class SiteTests(unittest.TestCase):
     def test_every_logo_returns_to_the_homepage(self):
         for name in ALL_PUBLIC_PAGES:
@@ -249,6 +256,98 @@ class SiteTests(unittest.TestCase):
             self.assertGreaterEqual(len(re.findall(r"\b[\w’-]+\b", visible)), 400, name)
             for phrase in phrases:
                 self.assertIn(phrase, visible, f"{name}: missing {phrase}")
+    def test_windows_support_bootstrapper_is_published_at_extensionless_route(self):
+        bootstrapper = ROOT / "win"
+        self.assertTrue(bootstrapper.is_file(), "The /win PowerShell bootstrapper is missing")
+        source = bootstrapper.read_text(encoding="utf-8")
+        self.assertTrue(source.startswith("# CityPlug attended-support bootstrapper"))
+
+    def test_windows_support_bootstrapper_is_pinned_and_attended_only(self):
+        source = (ROOT / "win").read_text(encoding="utf-8")
+        executable = powershell_executable_lines(source)
+        required = (
+            "tailscale-setup-1.102.3-amd64.msi",
+            "03ac8183c6e3ce276e9b44281ebe7e4c02aef28a971034ca170c4b665df42dce",
+            "rustdesk-1.4.9-x86_64.msi",
+            "c87d2f4cef2a5acd6003b6507dcfbf5d5168a256db082cd90b54d35193224aaa",
+            "apollo-rustdesk.tail792bf.ts.net",
+            "oL3LxCZ6WvfwZt8Lajbp9bVS90zZn7rGNRyZBwQhqys=",
+            '"approve-mode" "click"',
+            '"allow-only-conn-window-open" "Y"',
+            '"allow-remote-config-modification" "N"',
+            '"enable-lan-discovery" "N"',
+            '"enable-terminal" "N"',
+            '"enable-tunnel" "N"',
+            '"enable-remote-restart" "N"',
+            '"allow-auto-update" "N"',
+            "--shields-up=true",
+            "--auto-update=false",
+            "Get-AuthenticodeSignature",
+            "Get-FileHash",
+            "Test-NetConnection",
+            "CN=PURSLANE(?:,|$)",
+            "CN=Tailscale Inc\\.(?:,|$)",
+            '"4230334F8A7DD84E50D0273EF379E8B4A82F5DA5"',
+            '"108F172FDE945B21A5C0696731D6220D67D1C39E"',
+            '"1.4.9+67"',
+            '"1.102.3-t9329c3677-ga522f65e9"',
+        )
+        for marker in required:
+            self.assertIn(marker, executable, f"Missing executable installer safety marker: {marker}")
+        self.assertNotRegex(executable, r"(?i)\b(tskey-auth|authkey|--auth-key)\b")
+        self.assertNotIn("releases/latest", executable)
+        self.assertNotIn("setup-latest", executable)
+        self.assertNotIn("Invoke-Expression", executable)
+
+    def test_windows_support_bootstrapper_verifies_and_fails_closed(self):
+        source = powershell_executable_lines((ROOT / "win").read_text(encoding="utf-8"))
+        required = (
+            "function Clear-RustDeskPermanentPassword",
+            'Arguments = \'--password ""\'',
+            'output.Trim() -cne "Done!"',
+            'Assert-RustDeskOption "custom-rendezvous-server" $RustDeskServer',
+            'Assert-RustDeskOption "key" $RustDeskKey',
+            'Assert-RustDeskOption "relay-server" $RustDeskServer',
+            "function Invoke-RustDeskFailClosed",
+            'Set-Service -Name "RustDesk" -StartupType Disabled',
+            'Stop-Service -Name "RustDesk" -Force',
+            "function Invoke-TailscaleFailClosed",
+            '& $TailscaleExe down',
+            'if (-not $prefs.ShieldsUp -or $prefs.AutoUpdate.Apply)',
+            "function Initialize-SecureWorkDirectory",
+            "FileAttributes]::ReparsePoint",
+            'SetSecurityDescriptorSddlForm("O:BAG:BAD:PAI',
+            "function Enable-RustDeskQuarantine",
+            "function Disable-RustDeskQuarantine",
+            'New-NetFirewallRule',
+            'Set-Service -Name "RustDesk" -StartupType Disabled',
+            'Assert-InstalledVersion -Path $TailscaleExe -ExpectedProductVersion $TailscaleProductVersion',
+            'Assert-InstalledVersion -Path $script:RustDeskExe -ExpectedProductVersion $RustDeskProductVersion',
+            'Get-ItemProperty -LiteralPath "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion"',
+            '$os.InstallationType -ne "Client"',
+        )
+        for marker in required:
+            self.assertIn(marker, source, f"Missing fail-closed implementation marker: {marker}")
+
+        self.assertRegex(source, r"catch\s*\{[\s\S]*Invoke-RustDeskFailClosed[\s\S]*throw[\s\S]*\}\s*finally\s*\{")
+        quarantine = source.index("\n    Enable-RustDeskQuarantine\n", source.index("$RustDeskMsi ="))
+        rustdesk_install = source.index('Install-Msi -MsiPath $RustDeskMsi -Name "RustDesk"')
+        disable_service = source.index('Set-Service -Name "RustDesk" -StartupType Disabled', rustdesk_install)
+        start_service = source.index('Start-Service -Name "RustDesk"', disable_service)
+        release_quarantine = source.index("Disable-RustDeskQuarantine", start_service)
+        self.assertLess(quarantine, rustdesk_install)
+        self.assertLess(rustdesk_install, disable_service)
+        self.assertLess(disable_service, start_service)
+        self.assertLess(start_service, release_quarantine)
+
+    def test_windows_support_bootstrapper_remains_compatible_with_windows_powershell(self):
+        source = powershell_executable_lines((ROOT / "win").read_text(encoding="utf-8"))
+        self.assertIn('$env:OS -ne "Windows_NT"', source)
+        self.assertNotIn("$IsWindows", source)
+        self.assertIn('Read-Host "Type INSTALL to continue"', source)
+        self.assertIn('throw "Open Windows PowerShell as Administrator, then rerun the command."', source)
+        self.assertNotIn('Start-Process -FilePath "powershell.exe" -Verb RunAs', source)
+
     def test_custom_404_and_sitemap_cover_public_routes(self):
         error_page = ROOT / "404.html"
         self.assertTrue(error_page.is_file(), "404.html is missing")
