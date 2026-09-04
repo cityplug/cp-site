@@ -84,7 +84,9 @@ jobs:
           $ast = [System.Management.Automation.Language.Parser]::ParseFile("$PWD\win", [ref]$tokens, [ref]$errors)
           function Import-Function([string]$Name) {
             $functionAst = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $Name }, $true) | Select-Object -First 1
-            Set-Item -Path ("Function:\global:{0}" -f $Name) -Value ([scriptblock]::Create($functionAst.Body.Extent.Text))
+            $bodyText = $functionAst.Body.Extent.Text
+            $bodyText = $bodyText.Substring(1, $bodyText.Length - 2)
+            Set-Item -Path ("Function:\global:{0}" -f $Name) -Value ([scriptblock]::Create($bodyText))
           }
           Import-Function "Initialize-SecureDirectory"
           Import-Function "Initialize-SecureWorkDirectory"
@@ -134,7 +136,9 @@ jobs:
           $ast = [System.Management.Automation.Language.Parser]::ParseFile("$PWD\win", [ref]$tokens, [ref]$errors)
           function Import-Function([string]$Name) {
             $functionAst = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $Name }, $true) | Select-Object -First 1
-            Set-Item -Path ("Function:\global:{0}" -f $Name) -Value ([scriptblock]::Create($functionAst.Body.Extent.Text))
+            $bodyText = $functionAst.Body.Extent.Text
+            $bodyText = $bodyText.Substring(1, $bodyText.Length - 2)
+            Set-Item -Path ("Function:\global:{0}" -f $Name) -Value ([scriptblock]::Create($bodyText))
           }
           Import-Function "Write-Log"
           Import-Function "Enable-RustDeskQuarantine"
