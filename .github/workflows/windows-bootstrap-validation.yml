@@ -90,6 +90,7 @@ jobs:
           }
           Import-Function "Initialize-SecureDirectory"
           Import-Function "Initialize-SecureWorkDirectory"
+          $script:WorkRootName = "CityPlug\SupportBootstrap"
           try {
             $work = Initialize-SecureWorkDirectory
             $acl = Get-Acl -LiteralPath $work
