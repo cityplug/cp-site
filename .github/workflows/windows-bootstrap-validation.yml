@@ -24,6 +24,17 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile("$PWD\win", [ref]$tokens, [ref]$errors) | Out-Null
           if ($errors.Count) { throw ($errors | Out-String) }
 
+      - name: Verify public irm response is executable text
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $payload = Invoke-RestMethod -UseBasicParsing -Uri "https://cityplug.co.uk/win"
+          if ($payload -isnot [string]) { throw "Public /win returned $($payload.GetType().FullName), not PowerShell text" }
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseInput($payload, [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count) { throw ($errors | Out-String) }
+
       - name: Download and hash pinned MSI packages
         shell: powershell
         run: |
