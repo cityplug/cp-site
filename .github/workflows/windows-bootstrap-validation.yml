@@ -1,0 +1,124 @@
+name: Windows bootstrap validation
+
+on:
+  push:
+    branches:
+      - feat/windows-support-installer
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse and analyze with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD\win", [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count) { throw ($errors | Out-String) }
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+          $findings = Invoke-ScriptAnalyzer -Path "$PWD\win" -Severity Error,Warning
+          if ($findings) { throw ($findings | Format-Table -AutoSize | Out-String) }
+
+      - name: Verify pinned MSI bytes and Windows signatures
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          $packages = @(
+            @{
+              Uri = "https://pkgs.tailscale.com/stable/tailscale-setup-1.102.3-amd64.msi"
+              File = "$env:RUNNER_TEMP\tailscale.msi"
+              Hash = "03ac8183c6e3ce276e9b44281ebe7e4c02aef28a971034ca170c4b665df42dce"
+              Thumbprint = "108F172FDE945B21A5C0696731D6220D67D1C39E"
+              Subject = "^CN=Tailscale Inc\.(?:,|$)"
+              ProductVersion = "1.102.3"
+            },
+            @{
+              Uri = "https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-x86_64.msi"
+              File = "$env:RUNNER_TEMP\rustdesk.msi"
+              Hash = "c87d2f4cef2a5acd6003b6507dcfbf5d5168a256db082cd90b54d35193224aaa"
+              Thumbprint = "4230334F8A7DD84E50D0273EF379E8B4A82F5DA5"
+              Subject = "^CN=PURSLANE(?:,|$)"
+              ProductVersion = "1.4.9"
+            }
+          )
+          $installer = New-Object -ComObject WindowsInstaller.Installer
+          foreach ($package in $packages) {
+            Invoke-WebRequest -UseBasicParsing -Uri $package.Uri -OutFile $package.File
+            $hash = (Get-FileHash -LiteralPath $package.File -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($hash -cne $package.Hash) { throw "Hash mismatch for $($package.File)" }
+            $signature = Get-AuthenticodeSignature -LiteralPath $package.File
+            if ($signature.Status -ne "Valid") { throw "Invalid signature for $($package.File)" }
+            if ($signature.SignerCertificate.Subject -notmatch $package.Subject) { throw "Signer subject mismatch for $($package.File)" }
+            if ($signature.SignerCertificate.Thumbprint -cne $package.Thumbprint) { throw "Signer thumbprint mismatch for $($package.File)" }
+            $database = $installer.GetType().InvokeMember("OpenDatabase", "InvokeMethod", $null, $installer, @($package.File, 0))
+            $view = $database.GetType().InvokeMember("OpenView", "InvokeMethod", $null, $database, @("SELECT ``Value`` FROM ``Property`` WHERE ``Property``='ProductVersion'"))
+            $view.GetType().InvokeMember("Execute", "InvokeMethod", $null, $view, $null) | Out-Null
+            $record = $view.GetType().InvokeMember("Fetch", "InvokeMethod", $null, $view, $null)
+            $productVersion = $record.GetType().InvokeMember("StringData", "GetProperty", $null, $record, 1)
+            if ($productVersion -cne $package.ProductVersion) { throw "MSI ProductVersion mismatch for $($package.File): $productVersion" }
+          }
+
+      - name: Exercise security-critical helpers
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sourcePath = "$PWD\win"
+          $tokens = $null
+          $errors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($sourcePath, [ref]$tokens, [ref]$errors)
+          if ($errors.Count) { throw ($errors | Out-String) }
+          function Import-Function([string]$Name) {
+            $functionAst = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $Name }, $true) | Select-Object -First 1
+            if ($null -eq $functionAst) { throw "Missing function $Name" }
+            Invoke-Expression $functionAst.Extent.Text
+          }
+
+          Import-Function "Write-Log"
+          Import-Function "Initialize-SecureDirectory"
+          Import-Function "Initialize-SecureWorkDirectory"
+          Import-Function "Clear-RustDeskPermanentPassword"
+          Import-Function "Enable-RustDeskQuarantine"
+          Import-Function "Disable-RustDeskQuarantine"
+
+          $LogPath = "$env:RUNNER_TEMP\cityplug-validation.log"
+          $work = Initialize-SecureWorkDirectory
+          $acl = Get-Acl -LiteralPath $work
+          $owner = $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value
+          if ($owner -ne "S-1-5-32-544" -or -not $acl.AreAccessRulesProtected) { throw "Secure work-directory verification failed" }
+
+          $probeSource = @'
+          using System;
+          public class PasswordArgProbe {
+              public static int Main(string[] args) {
+                  if (args.Length == 2 && args[0] == "--password" && args[1] == "") {
+                      Console.WriteLine("Done!");
+                      return 0;
+                  }
+                  Console.Error.WriteLine("Expected --password followed by one empty argument; received " + args.Length);
+                  return 9;
+              }
+          }
+          '@
+          $probe = "$env:RUNNER_TEMP\password-arg-probe.exe"
+          Add-Type -TypeDefinition $probeSource -Language CSharp -OutputAssembly $probe -OutputType ConsoleApplication
+          $script:RustDeskExe = $probe
+          Clear-RustDeskPermanentPassword
+
+          $script:RustDeskExe = "$env:windir\System32\notepad.exe"
+          $script:RustDeskQuarantineGroup = "CityPlug RustDesk bootstrap quarantine"
+          $script:RustDeskQuarantineRuleNames = @()
+          try {
+            Enable-RustDeskQuarantine
+          } finally {
+            Disable-RustDeskQuarantine
+          }
