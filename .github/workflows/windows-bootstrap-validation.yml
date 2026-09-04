@@ -82,15 +82,11 @@ jobs:
           $tokens = $null
           $errors = $null
           $ast = [System.Management.Automation.Language.Parser]::ParseFile("$PWD\win", [ref]$tokens, [ref]$errors)
-          function Import-Function([string]$Name) {
-            $functionAst = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $Name }, $true) | Select-Object -First 1
-            $bodyText = $functionAst.Body.Extent.Text
-            $bodyText = $bodyText.Substring(1, $bodyText.Length - 2)
-            Set-Item -Path ("Function:\global:{0}" -f $Name) -Value ([scriptblock]::Create($bodyText))
+          $names = @("Initialize-SecureDirectory", "Initialize-SecureWorkDirectory")
+          $functionText = foreach ($name in $names) {
+            ($ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true) | Select-Object -First 1).Extent.Text
           }
-          Import-Function "Initialize-SecureDirectory"
-          Import-Function "Initialize-SecureWorkDirectory"
-          $script:WorkRootName = "CityPlug\SupportBootstrap"
+          Invoke-Expression ($functionText -join "`n")
           try {
             $work = Initialize-SecureWorkDirectory
             $acl = Get-Acl -LiteralPath $work
@@ -135,15 +131,11 @@ jobs:
           $tokens = $null
           $errors = $null
           $ast = [System.Management.Automation.Language.Parser]::ParseFile("$PWD\win", [ref]$tokens, [ref]$errors)
-          function Import-Function([string]$Name) {
-            $functionAst = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $Name }, $true) | Select-Object -First 1
-            $bodyText = $functionAst.Body.Extent.Text
-            $bodyText = $bodyText.Substring(1, $bodyText.Length - 2)
-            Set-Item -Path ("Function:\global:{0}" -f $Name) -Value ([scriptblock]::Create($bodyText))
+          $names = @("Write-Log", "Enable-RustDeskQuarantine", "Disable-RustDeskQuarantine")
+          $functionText = foreach ($name in $names) {
+            ($ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true) | Select-Object -First 1).Extent.Text
           }
-          Import-Function "Write-Log"
-          Import-Function "Enable-RustDeskQuarantine"
-          Import-Function "Disable-RustDeskQuarantine"
+          Invoke-Expression ($functionText -join "`n")
           $LogPath = "$env:RUNNER_TEMP\cityplug-validation.log"
           $script:RustDeskExe = "$env:windir\System32\notepad.exe"
           $script:RustDeskQuarantineGroup = "CityPlug RustDesk bootstrap quarantine"
