@@ -56,23 +56,27 @@ jobs:
             if ($signature.SignerCertificate.Thumbprint -cne $package.Thumbprint) { throw "Signer thumbprint mismatch for $($package.File)" }
           }
 
-      - name: Verify MSI ProductVersion metadata
+      - name: Verify packaged executable build identities
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
           $packages = @(
-            @{ File = "$env:RUNNER_TEMP\tailscale.msi"; ProductVersion = "1.102.3" },
-            @{ File = "$env:RUNNER_TEMP\rustdesk.msi"; ProductVersion = "1.4.9" }
+            @{ File = "$env:RUNNER_TEMP\tailscale.msi"; Exe = "tailscale.exe"; ProductVersion = "1.102.3-t9329c3677-ga522f65e9"; Thumbprint = "108F172FDE945B21A5C0696731D6220D67D1C39E" },
+            @{ File = "$env:RUNNER_TEMP\rustdesk.msi"; Exe = "rustdesk.exe"; ProductVersion = "1.4.9+67"; Thumbprint = "4230334F8A7DD84E50D0273EF379E8B4A82F5DA5" }
           )
-          $installer = New-Object -ComObject WindowsInstaller.Installer
           foreach ($package in $packages) {
-            $database = $installer.GetType().InvokeMember("OpenDatabase", "InvokeMethod", $null, $installer, @($package.File, 0))
-            $view = $database.GetType().InvokeMember("OpenView", "InvokeMethod", $null, $database, @("SELECT ``Value`` FROM ``Property`` WHERE ``Property``='ProductVersion'"))
-            $view.GetType().InvokeMember("Execute", "InvokeMethod", $null, $view, $null) | Out-Null
-            $record = $view.GetType().InvokeMember("Fetch", "InvokeMethod", $null, $view, $null)
-            $productVersion = $record.GetType().InvokeMember("StringData", "GetProperty", $null, $record, 1)
-            Write-Host "$($package.File): ProductVersion=$productVersion"
-            if ($productVersion -cne $package.ProductVersion) { throw "MSI ProductVersion mismatch for $($package.File): $productVersion" }
+            $target = Join-Path $env:RUNNER_TEMP ([IO.Path]::GetFileNameWithoutExtension($package.File) + "-admin-image")
+            New-Item -ItemType Directory -Path $target -Force | Out-Null
+            $arguments = @("/a", ('"{0}"' -f $package.File), "/qn", ("TARGETDIR={0}" -f ('"{0}"' -f $target)))
+            $process = Start-Process msiexec.exe -ArgumentList $arguments -Wait -PassThru
+            if ($process.ExitCode -ne 0) { throw "Administrative MSI extraction failed for $($package.File): $($process.ExitCode)" }
+            $exe = Get-ChildItem -LiteralPath $target -Filter $package.Exe -Recurse | Select-Object -First 1
+            if ($null -eq $exe) { throw "Packaged executable missing from $($package.File)" }
+            $productVersion = $exe.VersionInfo.ProductVersion.Trim()
+            $signature = Get-AuthenticodeSignature -LiteralPath $exe.FullName
+            Write-Host "$($exe.FullName): ProductVersion=$productVersion status=$($signature.Status) thumbprint=$($signature.SignerCertificate.Thumbprint)"
+            if ($productVersion -cne $package.ProductVersion) { throw "Packaged executable ProductVersion mismatch: $productVersion" }
+            if ($signature.Status -ne "Valid" -or $signature.SignerCertificate.Thumbprint -cne $package.Thumbprint) { throw "Packaged executable signature mismatch: $($exe.FullName)" }
           }
 
       - name: Exercise security-critical helpers
