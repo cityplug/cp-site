@@ -36,7 +36,7 @@ The extensionless `/win` route is a PowerShell bootstrapper intended to be launc
 
     irm https://cityplug.co.uk/win | iex
 
-It installs pinned official Tailscale and RustDesk MSI packages only after SHA-256 and Authenticode verification, then confirms the installed executable versions and publishers. Tailscale authentication is interactive; never add an auth key, reusable enrolment token, RustDesk permanent access secret, or other credential to this public repository. Run the command from an already elevated 64-bit Windows 10/11 PowerShell session.
+It installs pinned official Tailscale and RustDesk MSI packages only after SHA-256, Authenticode subject, signer-certificate thumbprint, and exact packaged-build verification. Before the RustDesk MSI can run, the bootstrapper requires Windows Defender Firewall to be running with every effective profile enabled, local rules permitted, and verified inbound/outbound RustDesk block rules present in `ActiveStore`. Tailscale authentication is interactive; never add an auth key, reusable enrolment token, RustDesk permanent access secret, or other credential to this public repository. Run the command from an already elevated 64-bit Windows 10/11 PowerShell session.
 
 The client is configured for attended support only:
 
@@ -46,6 +46,7 @@ The client is configured for attended support only:
 - private signal server, relay server, public key, and every safety option are read back before success is reported;
 - remote configuration changes, LAN discovery, terminal, tunnelling, remote restart, and automatic updates are disabled;
 - Tailscale shields-up blocks incoming connections to the customer's computer;
+- RustDesk remains under verified bidirectional firewall quarantine until every attended-only setting and service state passes readback;
 - any incomplete or unverifiable RustDesk configuration leaves its process and service stopped and disabled;
 - the script records operational messages under `%ProgramData%\CityPlug\SupportBootstrap` but does not capture the Tailscale sign-in URL.
 
