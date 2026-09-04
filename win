@@ -1,0 +1,498 @@
+# CityPlug attended-support bootstrapper
+# Installs verified Tailscale and RustDesk packages, then configures click-to-approve support.
+
+[CmdletBinding()]
+param()
+
+Set-StrictMode -Version 2.0
+$ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
+
+$TailscaleVersion = "1.102.3"
+$TailscaleProductVersion = "1.102.3-t9329c3677-ga522f65e9"
+$TailscaleMsiName = "tailscale-setup-1.102.3-amd64.msi"
+$TailscaleUri = "https://pkgs.tailscale.com/stable/tailscale-setup-1.102.3-amd64.msi"
+$TailscaleSha256 = "03ac8183c6e3ce276e9b44281ebe7e4c02aef28a971034ca170c4b665df42dce"
+$TailscaleSignerThumbprint = "108F172FDE945B21A5C0696731D6220D67D1C39E"
+$RustDeskVersion = "1.4.9"
+$RustDeskProductVersion = "1.4.9+67"
+$RustDeskMsiName = "rustdesk-1.4.9-x86_64.msi"
+$RustDeskUri = "https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-x86_64.msi"
+$RustDeskSha256 = "c87d2f4cef2a5acd6003b6507dcfbf5d5168a256db082cd90b54d35193224aaa"
+$RustDeskSignerThumbprint = "4230334F8A7DD84E50D0273EF379E8B4A82F5DA5"
+$RustDeskServer = "apollo-rustdesk.tail792bf.ts.net"
+$RustDeskKey = "oL3LxCZ6WvfwZt8Lajbp9bVS90zZn7rGNRyZBwQhqys="
+
+function Test-IsAdministrator {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+if ($env:OS -ne "Windows_NT") {
+    throw "This installer supports 64-bit Windows 10 and Windows 11 only."
+}
+if (-not [Environment]::Is64BitOperatingSystem) {
+    throw "This installer supports 64-bit Windows 10 and Windows 11 only."
+}
+$os = Get-ItemProperty -LiteralPath "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+if ($os.InstallationType -ne "Client" -or [int]$os.CurrentBuildNumber -lt 10240) {
+    throw "This installer supports 64-bit Windows 10 and Windows 11 clients only."
+}
+
+if (-not (Test-IsAdministrator)) {
+    throw "Open Windows PowerShell as Administrator, then rerun the command."
+}
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+function Write-Log([string]$Message) {
+    $line = "{0} {1}" -f (Get-Date -Format "yyyy-MM-ddTHH:mm:ssK"), $Message
+    Add-Content -LiteralPath $LogPath -Value $line -Encoding UTF8
+    Write-Host $Message
+}
+
+function Initialize-SecureDirectory([string]$Path) {
+    $administratorsSid = "S-1-5-32-544"
+    $systemSid = "S-1-5-18"
+
+    if (Test-Path -LiteralPath $Path) {
+        $existing = Get-Item -LiteralPath $Path -Force
+        if (-not $existing.PSIsContainer -or
+            (($existing.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)) {
+            throw "Refusing unsafe work-directory ancestor: $Path"
+        }
+        $existingOwner = (Get-Acl -LiteralPath $Path).GetOwner([Security.Principal.SecurityIdentifier]).Value
+        if ($existingOwner -notin @($administratorsSid, $systemSid)) {
+            throw "Refusing work-directory ancestor not owned by Administrators or SYSTEM: $Path"
+        }
+    } else {
+        New-Item -ItemType Directory -Path $Path | Out-Null
+    }
+
+    $security = New-Object Security.AccessControl.DirectorySecurity
+    $security.SetSecurityDescriptorSddlForm("O:BAG:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)")
+    [IO.Directory]::SetAccessControl($Path, $security)
+
+    $verifiedItem = Get-Item -LiteralPath $Path -Force
+    $verifiedSecurity = Get-Acl -LiteralPath $Path
+    $verifiedOwner = $verifiedSecurity.GetOwner([Security.Principal.SecurityIdentifier]).Value
+    if ((($verifiedItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) -or
+        $verifiedOwner -ne $administratorsSid -or
+        -not $verifiedSecurity.AreAccessRulesProtected) {
+        throw "Could not verify the protected work directory: $Path"
+    }
+    $verifiedRules = @($verifiedSecurity.GetAccessRules($true, $false, [Security.Principal.SecurityIdentifier]))
+    if ($verifiedRules.Count -ne 2) {
+        throw "The work directory contains an unexpected number of access rules: $Path"
+    }
+    foreach ($rule in $verifiedRules) {
+        if ($rule.IdentityReference.Value -notin @($administratorsSid, $systemSid) -or
+            $rule.AccessControlType -ne [Security.AccessControl.AccessControlType]::Allow -or
+            $rule.FileSystemRights -ne [Security.AccessControl.FileSystemRights]::FullControl) {
+            throw "The work directory contains an unexpected access rule: $Path"
+        }
+    }
+}
+
+function Initialize-SecureWorkDirectory {
+    $cityPlugRoot = Join-Path $env:ProgramData "CityPlug"
+    Initialize-SecureDirectory $cityPlugRoot
+    $bootstrapRoot = Join-Path $cityPlugRoot "SupportBootstrap"
+    Initialize-SecureDirectory $bootstrapRoot
+    $leaf = Join-Path $bootstrapRoot ([Guid]::NewGuid().ToString("N"))
+    Initialize-SecureDirectory $leaf
+    return $leaf
+}
+
+function ConvertTo-Version4([string]$RawVersion) {
+    $match = [regex]::Match($RawVersion, "\d+(?:\.\d+){1,3}")
+    if (-not $match.Success) {
+        throw "Could not parse installed version '$RawVersion'."
+    }
+    $parts = @($match.Value.Split("."))
+    while ($parts.Count -lt 4) {
+        $parts += "0"
+    }
+    return [version]($parts -join ".")
+}
+
+function Assert-NoNewerInstalled {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$ExpectedVersion,
+        [Parameter(Mandatory = $true)][string]$ExpectedProductVersion,
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+    if (Test-Path -LiteralPath $Path -PathType Leaf) {
+        $installedProductVersion = (Get-Item -LiteralPath $Path).VersionInfo.ProductVersion.Trim()
+        if ($installedProductVersion -ceq $ExpectedProductVersion) {
+            return
+        }
+        $installed = ConvertTo-Version4 $installedProductVersion
+        $expected = ConvertTo-Version4 $ExpectedVersion
+        if ($installed -ge $expected) {
+            throw "$Name build '$installedProductVersion' does not exactly match the reviewed build '$ExpectedProductVersion'. Nothing was changed; obtain an updated bootstrapper instead of downgrading or replacing an unreviewed same-version build."
+        }
+    }
+}
+
+function Assert-InstalledVersion {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$ExpectedProductVersion
+    )
+    $installedProductVersion = (Get-Item -LiteralPath $Path).VersionInfo.ProductVersion.Trim()
+    if ($installedProductVersion -cne $ExpectedProductVersion) {
+        throw "Installed product version '$installedProductVersion' does not exactly match reviewed build '$ExpectedProductVersion' at $Path."
+    }
+}
+
+function Invoke-VerifiedDownload {
+    param(
+        [Parameter(Mandatory = $true)][string]$Uri,
+        [Parameter(Mandatory = $true)][string]$Destination,
+        [Parameter(Mandatory = $true)][string]$ExpectedSha256,
+        [Parameter(Mandatory = $true)][string]$AllowedPublisher,
+        [Parameter(Mandatory = $true)][string]$ExpectedSignerThumbprint
+    )
+
+    Write-Log "Downloading $Uri"
+    Invoke-WebRequest -UseBasicParsing -Uri $Uri -OutFile $Destination
+
+    $actualHash = (Get-FileHash -LiteralPath $Destination -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actualHash -ne $ExpectedSha256.ToLowerInvariant()) {
+        Remove-Item -LiteralPath $Destination -Force -ErrorAction SilentlyContinue
+        throw "The downloaded package hash did not match the pinned CityPlug release."
+    }
+
+    $signature = Get-AuthenticodeSignature -LiteralPath $Destination
+    if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
+        Remove-Item -LiteralPath $Destination -Force -ErrorAction SilentlyContinue
+        throw "The downloaded package does not have a valid Authenticode signature."
+    }
+    if ($signature.SignerCertificate.Subject -notmatch $AllowedPublisher) {
+        Remove-Item -LiteralPath $Destination -Force -ErrorAction SilentlyContinue
+        throw "The downloaded package was signed by an unexpected publisher."
+    }
+    if ($signature.SignerCertificate.Thumbprint -cne $ExpectedSignerThumbprint) {
+        Remove-Item -LiteralPath $Destination -Force -ErrorAction SilentlyContinue
+        throw "The downloaded package signer certificate did not match the reviewed release."
+    }
+    Write-Log "Verified SHA-256 and Authenticode publisher for $(Split-Path -Leaf $Destination)."
+}
+
+function Install-Msi {
+    param(
+        [Parameter(Mandatory = $true)][string]$MsiPath,
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+
+    $msiLog = Join-Path $WorkDir ("{0}-msi.log" -f $Name.ToLowerInvariant())
+    $arguments = @("/i", ('"{0}"' -f $MsiPath), "/qn", "/norestart", "/L*v", ('"{0}"' -f $msiLog))
+    $process = Start-Process -FilePath "msiexec.exe" -ArgumentList $arguments -Wait -PassThru
+    if ($process.ExitCode -notin @(0, 1641, 3010)) {
+        throw "$Name installation failed with Windows Installer exit code $($process.ExitCode). See $msiLog"
+    }
+    Write-Log "$Name installation completed with exit code $($process.ExitCode)."
+}
+
+function Assert-SignedExecutable {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$AllowedPublisher,
+        [Parameter(Mandatory = $true)][string]$ExpectedSignerThumbprint
+    )
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw "Expected installed executable was not found: $Path"
+    }
+    $signature = Get-AuthenticodeSignature -LiteralPath $Path
+    if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
+        throw "Installed executable has an invalid Authenticode signature: $Path"
+    }
+    if ($signature.SignerCertificate.Subject -notmatch $AllowedPublisher) {
+        throw "Installed executable was signed by an unexpected publisher: $Path"
+    }
+    if ($signature.SignerCertificate.Thumbprint -cne $ExpectedSignerThumbprint) {
+        throw "Installed executable signer certificate did not match the reviewed release: $Path"
+    }
+}
+
+function Assert-RustDeskOption([string]$Name, [string]$ExpectedValue) {
+    for ($attempt = 1; $attempt -le 10; $attempt++) {
+        $actual = ((& $script:RustDeskExe --option $Name) | Out-String).Trim()
+        if ($LASTEXITCODE -eq 0 -and $actual -ceq $ExpectedValue) {
+            return
+        }
+        Start-Sleep -Milliseconds 500
+    }
+    throw "RustDesk option '$Name' did not match the required attended-support value."
+}
+
+function Set-RustDeskOption([string]$Name, [string]$Value) {
+    & $script:RustDeskExe --option $Name $Value | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "RustDesk rejected the attended-support option '$Name'."
+    }
+    Assert-RustDeskOption $Name $Value
+}
+
+function Clear-RustDeskPermanentPassword {
+    $startInfo = New-Object Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $script:RustDeskExe
+    $startInfo.Arguments = '--password ""'
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $process = [Diagnostics.Process]::Start($startInfo)
+    $output = $process.StandardOutput.ReadToEnd()
+    $errorOutput = $process.StandardError.ReadToEnd()
+    $process.WaitForExit()
+    if ($process.ExitCode -ne 0 -or $output.Trim() -cne "Done!") {
+        throw "RustDesk did not confirm removal of its permanent access secret. $errorOutput"
+    }
+}
+
+function Invoke-RustDeskFailClosed {
+    $containmentErrors = @()
+    $service = Get-Service -Name "RustDesk" -ErrorAction SilentlyContinue
+    if ($null -ne $service) {
+        try {
+            Stop-Service -Name "RustDesk" -Force
+        } catch {
+            $containmentErrors += $_.Exception.Message
+        }
+        try {
+            Set-Service -Name "RustDesk" -StartupType Disabled
+        } catch {
+            $containmentErrors += $_.Exception.Message
+        }
+    }
+    try {
+        Get-Process -Name "RustDesk" -ErrorAction SilentlyContinue | Stop-Process -Force
+    } catch {
+        $containmentErrors += $_.Exception.Message
+    }
+
+    $remainingProcess = Get-Process -Name "RustDesk" -ErrorAction SilentlyContinue
+    $serviceState = Get-CimInstance -ClassName Win32_Service -Filter "Name='RustDesk'" -ErrorAction SilentlyContinue
+    if ($null -ne $remainingProcess -or
+        ($null -ne $serviceState -and ($serviceState.State -ne "Stopped" -or $serviceState.StartMode -ne "Disabled"))) {
+        $detail = $containmentErrors -join " "
+        throw "RustDesk could not be placed in a verified stopped and disabled state. $detail"
+    }
+    Write-Log "RustDesk was stopped and disabled because safe attended-only configuration was not fully verified."
+}
+
+function Enable-RustDeskQuarantine {
+    $directions = @("Inbound", "Outbound")
+    foreach ($direction in $directions) {
+        $ruleName = "CityPlug-RustDesk-Quarantine-{0}-{1}" -f $direction, [Guid]::NewGuid().ToString("N")
+        New-NetFirewallRule -Name $ruleName `
+            -DisplayName "CityPlug RustDesk bootstrap quarantine ($direction)" `
+            -Group $script:RustDeskQuarantineGroup `
+            -Direction $direction `
+            -Program $script:RustDeskExe `
+            -Action Block `
+            -Profile Any `
+            -Enabled True | Out-Null
+        $script:RustDeskQuarantineRuleNames += $ruleName
+    }
+
+    foreach ($ruleName in $script:RustDeskQuarantineRuleNames) {
+        $rule = Get-NetFirewallRule -Name $ruleName -ErrorAction Stop
+        $program = ($rule | Get-NetFirewallApplicationFilter).Program
+        if ($rule.Enabled -ne "True" -or $rule.Action -ne "Block" -or
+            $program -cne $script:RustDeskExe) {
+            throw "Could not verify the temporary RustDesk network quarantine."
+        }
+    }
+    Write-Log "RustDesk network access is quarantined until attended-only configuration is verified."
+}
+
+function Disable-RustDeskQuarantine {
+    Get-NetFirewallRule -Group $script:RustDeskQuarantineGroup -ErrorAction SilentlyContinue |
+        Remove-NetFirewallRule
+    if ($null -ne (Get-NetFirewallRule -Group $script:RustDeskQuarantineGroup -ErrorAction SilentlyContinue)) {
+        throw "The temporary RustDesk network quarantine could not be removed after safe configuration."
+    }
+    $script:RustDeskQuarantineRuleNames = @()
+    Write-Log "RustDesk network quarantine removed after successful safety verification."
+}
+
+function Invoke-TailscaleFailClosed {
+    if (-not (Test-Path -LiteralPath $TailscaleExe -PathType Leaf)) {
+        return
+    }
+
+    & $TailscaleExe set --shields-up=true --auto-update=false | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        try {
+            $prefs = ((& $TailscaleExe debug prefs 2>$null) | Out-String | ConvertFrom-Json)
+            if ($prefs.ShieldsUp -and -not $prefs.AutoUpdate.Apply) {
+                Write-Log "Tailscale retained inbound blocking and disabled automatic updates after setup failure."
+                return
+            }
+        } catch {
+            # Fall through to disconnection when shield state cannot be proven.
+        }
+    }
+
+    & $TailscaleExe down | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Tailscale could not be shielded or disconnected after setup failure."
+    }
+    $status = ((& $TailscaleExe status --json 2>$null) | Out-String | ConvertFrom-Json)
+    if ($status.BackendState -eq "Running") {
+        throw "Tailscale still reports a running backend after fail-closed disconnection."
+    }
+    Write-Log "Tailscale was disconnected because inbound shielding could not be verified."
+}
+
+Write-Host ""
+Write-Host "CityPlug attended remote-support setup" -ForegroundColor Cyan
+Write-Host "This installs reviewed Tailscale and RustDesk versions from their official publishers."
+Write-Host "RustDesk will accept connections only while its window is open and only after you click Accept."
+Write-Host "Any existing permanent RustDesk access secret will be removed."
+Write-Host "Tailscale will block inbound connections to this computer; it is used only to reach CityPlug's private RustDesk server."
+Write-Host "If every safety setting cannot be verified, RustDesk will be stopped and disabled."
+Write-Host ""
+$consent = Read-Host "Type INSTALL to continue"
+if ($consent -cne "INSTALL") {
+    Write-Host "Cancelled. Nothing was installed."
+    return
+}
+
+$WorkDir = Initialize-SecureWorkDirectory
+$LogPath = Join-Path $WorkDir ("install-{0}.log" -f (Get-Date -Format "yyyyMMdd-HHmmss"))
+
+$TailscaleExe = Join-Path $env:ProgramFiles "Tailscale\tailscale.exe"
+$script:RustDeskExe = Join-Path $env:ProgramFiles "RustDesk\rustdesk.exe"
+$script:RustDeskQuarantineGroup = "CityPlug RustDesk bootstrap quarantine"
+$script:RustDeskQuarantineRuleNames = @()
+Assert-NoNewerInstalled -Path $TailscaleExe -ExpectedVersion $TailscaleVersion -ExpectedProductVersion $TailscaleProductVersion -Name "Tailscale"
+Assert-NoNewerInstalled -Path $script:RustDeskExe -ExpectedVersion $RustDeskVersion -ExpectedProductVersion $RustDeskProductVersion -Name "RustDesk"
+
+$TailscaleMsi = Join-Path $WorkDir $TailscaleMsiName
+$RustDeskMsi = Join-Path $WorkDir $RustDeskMsiName
+
+try {
+    Enable-RustDeskQuarantine
+    Invoke-VerifiedDownload -Uri $TailscaleUri -Destination $TailscaleMsi -ExpectedSha256 $TailscaleSha256 -AllowedPublisher "^CN=Tailscale Inc\.(?:,|$)" -ExpectedSignerThumbprint $TailscaleSignerThumbprint
+    Install-Msi -MsiPath $TailscaleMsi -Name "Tailscale"
+    Assert-SignedExecutable -Path $TailscaleExe -AllowedPublisher "^CN=Tailscale Inc\.(?:,|$)" -ExpectedSignerThumbprint $TailscaleSignerThumbprint
+    Assert-InstalledVersion -Path $TailscaleExe -ExpectedProductVersion $TailscaleProductVersion
+
+    $tailscaleConnected = $false
+    try {
+        $status = ((& $TailscaleExe status --json 2>$null) | Out-String | ConvertFrom-Json)
+        $tailscaleConnected = ($status.BackendState -eq "Running")
+    } catch {
+        $tailscaleConnected = $false
+    }
+
+    if (-not $tailscaleConnected) {
+        Write-Host ""
+        Write-Host "Tailscale sign-in is required." -ForegroundColor Yellow
+        Write-Host "Sign in with the account CityPlug has authorised for the shared support server."
+        & $TailscaleExe up
+        if ($LASTEXITCODE -ne 0) {
+            throw "Tailscale sign-in did not complete."
+        }
+    }
+
+    & $TailscaleExe set --shields-up=true --auto-update=false | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Tailscale connected, but its inbound shield and update policy could not be applied."
+    }
+    $status = ((& $TailscaleExe status --json 2>$null) | Out-String | ConvertFrom-Json)
+    if ($status.BackendState -ne "Running") {
+        throw "Tailscale is not connected after sign-in."
+    }
+    $prefs = ((& $TailscaleExe debug prefs 2>$null) | Out-String | ConvertFrom-Json)
+    if (-not $prefs.ShieldsUp -or $prefs.AutoUpdate.Apply) {
+        throw "Tailscale did not retain inbound shielding and its disabled automatic-update policy."
+    }
+    Write-Log "Tailscale is connected with inbound connections blocked."
+
+    foreach ($port in @(21116, 21117)) {
+        $reachable = Test-NetConnection -ComputerName $RustDeskServer -Port $port -InformationLevel Quiet -WarningAction SilentlyContinue
+        if (-not $reachable) {
+            throw "CityPlug's private RustDesk server is not reachable on TCP $port. Confirm that CityPlug shared the support node with this Tailscale account, then rerun the command."
+        }
+    }
+    Write-Log "Private RustDesk signal and relay ports are reachable through Tailscale."
+
+    Invoke-VerifiedDownload -Uri $RustDeskUri -Destination $RustDeskMsi -ExpectedSha256 $RustDeskSha256 -AllowedPublisher "^CN=PURSLANE(?:,|$)" -ExpectedSignerThumbprint $RustDeskSignerThumbprint
+    Install-Msi -MsiPath $RustDeskMsi -Name "RustDesk"
+    Assert-SignedExecutable -Path $script:RustDeskExe -AllowedPublisher "^CN=PURSLANE(?:,|$)" -ExpectedSignerThumbprint $RustDeskSignerThumbprint
+    Assert-InstalledVersion -Path $script:RustDeskExe -ExpectedProductVersion $RustDeskProductVersion
+
+    Stop-Service -Name "RustDesk" -Force
+    Set-Service -Name "RustDesk" -StartupType Disabled
+    Set-Service -Name "RustDesk" -StartupType Manual
+    Start-Service -Name "RustDesk"
+    (Get-Service -Name "RustDesk").WaitForStatus("Running", [TimeSpan]::FromSeconds(20))
+
+    Clear-RustDeskPermanentPassword
+
+    $serverConfig = "host=$RustDeskServer,key=$RustDeskKey,relay=$RustDeskServer"
+    & $script:RustDeskExe --config $serverConfig | Out-Null
+    Assert-RustDeskOption "custom-rendezvous-server" $RustDeskServer
+    Assert-RustDeskOption "key" $RustDeskKey
+    Assert-RustDeskOption "relay-server" $RustDeskServer
+
+    Set-RustDeskOption "approve-mode" "click"
+    Set-RustDeskOption "allow-only-conn-window-open" "Y"
+    Set-RustDeskOption "allow-remote-config-modification" "N"
+    Set-RustDeskOption "enable-lan-discovery" "N"
+    Set-RustDeskOption "enable-terminal" "N"
+    Set-RustDeskOption "enable-tunnel" "N"
+    Set-RustDeskOption "enable-remote-restart" "N"
+    Set-RustDeskOption "allow-auto-update" "N"
+
+    Set-Service -Name "RustDesk" -StartupType Automatic
+    $serviceState = Get-CimInstance -ClassName Win32_Service -Filter "Name='RustDesk'"
+    if ($serviceState.State -ne "Running" -or $serviceState.StartMode -ne "Auto") {
+        throw "RustDesk did not retain the verified running and automatic service state."
+    }
+    Disable-RustDeskQuarantine
+
+    $rustDeskId = ((& $script:RustDeskExe --get-id) | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0 -or $rustDeskId -notmatch "^[0-9 ]+$") {
+        throw "RustDesk was installed, but its support ID could not be read."
+    }
+
+    Write-Log "RustDesk configured and verified for click-to-approve attended support."
+    Write-Host ""
+    Write-Host "Setup complete." -ForegroundColor Green
+    Write-Host "RustDesk support ID: $rustDeskId" -ForegroundColor Cyan
+    Write-Host "Open RustDesk from the Start menu, keep its window open, and give this ID to CityPlug."
+    Write-Host "You must click Accept before CityPlug can view or control this computer."
+    Write-Host "Installation log: $LogPath"
+} catch {
+    $setupFailure = $_.Exception.Message
+    $safetyFailures = @()
+    try {
+        Enable-RustDeskQuarantine
+    } catch {
+        $safetyFailures += $_.Exception.Message
+    }
+    try {
+        Invoke-RustDeskFailClosed
+    } catch {
+        $safetyFailures += $_.Exception.Message
+    }
+    try {
+        Invoke-TailscaleFailClosed
+    } catch {
+        $safetyFailures += $_.Exception.Message
+    }
+    if ($safetyFailures.Count -gt 0) {
+        throw "Setup failed: $setupFailure Fail-closed verification also failed: $($safetyFailures -join ' ')"
+    }
+    throw "Setup failed safely: $setupFailure"
+} finally {
+    Remove-Item -LiteralPath $TailscaleMsi, $RustDeskMsi -Force -ErrorAction SilentlyContinue
+}
