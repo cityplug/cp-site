@@ -285,6 +285,43 @@ function Invoke-RustDeskFailClosed {
     Write-Log "RustDesk was stopped and disabled because safe attended-only configuration was not fully verified."
 }
 
+function Assert-RustDeskQuarantineEffective {
+    $firewallService = Get-Service -Name "MpsSvc" -ErrorAction Stop
+    if ($firewallService.Status -ne [System.ServiceProcess.ServiceControllerStatus]::Running) {
+        throw "Windows Defender Firewall is not running, so RustDesk quarantine cannot be enforced."
+    }
+
+    $profiles = @(Get-NetFirewallProfile -PolicyStore ActiveStore -ErrorAction Stop)
+    if ($profiles.Count -lt 3) {
+        throw "Windows Defender Firewall did not report every effective network profile."
+    }
+    foreach ($profile in $profiles) {
+        if ("$($profile.Enabled)" -cne "True") {
+            throw "Windows Defender Firewall profile '$($profile.Name)' is disabled."
+        }
+        if ("$($profile.AllowLocalFirewallRules)" -ceq "False") {
+            throw "Windows Defender Firewall profile '$($profile.Name)' suppresses local quarantine rules."
+        }
+    }
+
+    $verifiedDirections = @()
+    foreach ($ruleName in $script:RustDeskQuarantineRuleNames) {
+        $activeRule = Get-NetFirewallRule -PolicyStore ActiveStore -Name $ruleName -ErrorAction Stop
+        $program = ($activeRule | Get-NetFirewallApplicationFilter -ErrorAction Stop).Program
+        if ("$($activeRule.Enabled)" -cne "True" -or
+            "$($activeRule.Action)" -cne "Block" -or
+            "$($activeRule.PrimaryStatus)" -cne "OK" -or
+            "$($activeRule.PolicyStoreSourceType)" -cne "Local" -or
+            $program -cne $script:RustDeskExe) {
+            throw "The temporary RustDesk quarantine rule is not effective in ActiveStore."
+        }
+        $verifiedDirections += "$($activeRule.Direction)"
+    }
+    if ($verifiedDirections -notcontains "Inbound" -or $verifiedDirections -notcontains "Outbound") {
+        throw "The effective RustDesk quarantine does not block both network directions."
+    }
+}
+
 function Enable-RustDeskQuarantine {
     $directions = @("Inbound", "Outbound")
     foreach ($direction in $directions) {
@@ -300,14 +337,7 @@ function Enable-RustDeskQuarantine {
         $script:RustDeskQuarantineRuleNames += $ruleName
     }
 
-    foreach ($ruleName in $script:RustDeskQuarantineRuleNames) {
-        $rule = Get-NetFirewallRule -Name $ruleName -ErrorAction Stop
-        $program = ($rule | Get-NetFirewallApplicationFilter).Program
-        if ($rule.Enabled -ne "True" -or $rule.Action -ne "Block" -or
-            $program -cne $script:RustDeskExe) {
-            throw "Could not verify the temporary RustDesk network quarantine."
-        }
-    }
+    Assert-RustDeskQuarantineEffective
     Write-Log "RustDesk network access is quarantined until attended-only configuration is verified."
 }
 
@@ -425,6 +455,7 @@ try {
     Write-Log "Private RustDesk signal and relay ports are reachable through Tailscale."
 
     Invoke-VerifiedDownload -Uri $RustDeskUri -Destination $RustDeskMsi -ExpectedSha256 $RustDeskSha256 -AllowedPublisher "^CN=PURSLANE(?:,|$)" -ExpectedSignerThumbprint $RustDeskSignerThumbprint
+    Assert-RustDeskQuarantineEffective
     Install-Msi -MsiPath $RustDeskMsi -Name "RustDesk"
     Assert-SignedExecutable -Path $script:RustDeskExe -AllowedPublisher "^CN=PURSLANE(?:,|$)" -ExpectedSignerThumbprint $RustDeskSignerThumbprint
     Assert-InstalledVersion -Path $script:RustDeskExe -ExpectedProductVersion $RustDeskProductVersion

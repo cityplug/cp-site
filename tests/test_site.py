@@ -318,8 +318,13 @@ class SiteTests(unittest.TestCase):
             "FileAttributes]::ReparsePoint",
             'SetSecurityDescriptorSddlForm("O:BAG:BAD:PAI',
             "function Enable-RustDeskQuarantine",
+            "function Assert-RustDeskQuarantineEffective",
             "function Disable-RustDeskQuarantine",
             'New-NetFirewallRule',
+            'Get-Service -Name "MpsSvc"',
+            'Get-NetFirewallProfile -PolicyStore ActiveStore',
+            'AllowLocalFirewallRules',
+            'Get-NetFirewallRule -PolicyStore ActiveStore',
             'Set-Service -Name "RustDesk" -StartupType Disabled',
             'Assert-InstalledVersion -Path $TailscaleExe -ExpectedProductVersion $TailscaleProductVersion',
             'Assert-InstalledVersion -Path $script:RustDeskExe -ExpectedProductVersion $RustDeskProductVersion',
@@ -332,10 +337,12 @@ class SiteTests(unittest.TestCase):
         self.assertRegex(source, r"catch\s*\{[\s\S]*Invoke-RustDeskFailClosed[\s\S]*throw[\s\S]*\}\s*finally\s*\{")
         quarantine = source.index("\n    Enable-RustDeskQuarantine\n", source.index("$RustDeskMsi ="))
         rustdesk_install = source.index('Install-Msi -MsiPath $RustDeskMsi -Name "RustDesk"')
+        effective_quarantine = source.index("\n    Assert-RustDeskQuarantineEffective\n", quarantine)
         disable_service = source.index('Set-Service -Name "RustDesk" -StartupType Disabled', rustdesk_install)
         start_service = source.index('Start-Service -Name "RustDesk"', disable_service)
         release_quarantine = source.index("Disable-RustDeskQuarantine", start_service)
         self.assertLess(quarantine, rustdesk_install)
+        self.assertLess(effective_quarantine, rustdesk_install)
         self.assertLess(rustdesk_install, disable_service)
         self.assertLess(disable_service, start_service)
         self.assertLess(start_service, release_quarantine)
