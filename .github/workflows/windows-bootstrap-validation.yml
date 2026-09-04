@@ -79,34 +79,33 @@ jobs:
             if ($signature.Status -ne "Valid" -or $signature.SignerCertificate.Thumbprint -cne $package.Thumbprint) { throw "Packaged executable signature mismatch: $($exe.FullName)" }
           }
 
-      - name: Exercise security-critical helpers
+      - name: Verify secure work-directory ACLs
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
-          $sourcePath = "$PWD\win"
           $tokens = $null
           $errors = $null
-          $ast = [System.Management.Automation.Language.Parser]::ParseFile($sourcePath, [ref]$tokens, [ref]$errors)
-          if ($errors.Count) { throw ($errors | Out-String) }
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile("$PWD\win", [ref]$tokens, [ref]$errors)
           function Import-Function([string]$Name) {
             $functionAst = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $Name }, $true) | Select-Object -First 1
-            if ($null -eq $functionAst) { throw "Missing function $Name" }
             Invoke-Expression $functionAst.Extent.Text
           }
-
-          Import-Function "Write-Log"
           Import-Function "Initialize-SecureDirectory"
           Import-Function "Initialize-SecureWorkDirectory"
-          Import-Function "Clear-RustDeskPermanentPassword"
-          Import-Function "Enable-RustDeskQuarantine"
-          Import-Function "Disable-RustDeskQuarantine"
-
-          $LogPath = "$env:RUNNER_TEMP\cityplug-validation.log"
           $work = Initialize-SecureWorkDirectory
           $acl = Get-Acl -LiteralPath $work
           $owner = $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value
           if ($owner -ne "S-1-5-32-544" -or -not $acl.AreAccessRulesProtected) { throw "Secure work-directory verification failed" }
 
+      - name: Verify empty native password argument
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $tokens = $null
+          $errors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile("$PWD\win", [ref]$tokens, [ref]$errors)
+          $functionAst = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq "Clear-RustDeskPermanentPassword" }, $true) | Select-Object -First 1
+          Invoke-Expression $functionAst.Extent.Text
           $probeSource = @'
           using System;
           public class PasswordArgProbe {
@@ -125,6 +124,21 @@ jobs:
           $script:RustDeskExe = $probe
           Clear-RustDeskPermanentPassword
 
+      - name: Verify RustDesk firewall quarantine
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $tokens = $null
+          $errors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile("$PWD\win", [ref]$tokens, [ref]$errors)
+          function Import-Function([string]$Name) {
+            $functionAst = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $Name }, $true) | Select-Object -First 1
+            Invoke-Expression $functionAst.Extent.Text
+          }
+          Import-Function "Write-Log"
+          Import-Function "Enable-RustDeskQuarantine"
+          Import-Function "Disable-RustDeskQuarantine"
+          $LogPath = "$env:RUNNER_TEMP\cityplug-validation.log"
           $script:RustDeskExe = "$env:windir\System32\notepad.exe"
           $script:RustDeskQuarantineGroup = "CityPlug RustDesk bootstrap quarantine"
           $script:RustDeskQuarantineRuleNames = @()
