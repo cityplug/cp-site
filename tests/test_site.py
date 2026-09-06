@@ -294,10 +294,45 @@ class SiteTests(unittest.TestCase):
         )
         for marker in required:
             self.assertIn(marker, executable, f"Missing executable installer safety marker: {marker}")
-        self.assertNotRegex(executable, r"(?i)\b(tskey-auth|authkey|--auth-key)\b")
+        self.assertNotRegex(executable, r"(?i)tskey-auth-[a-z0-9_-]{10,}")
         self.assertNotIn("releases/latest", executable)
         self.assertNotIn("setup-latest", executable)
         self.assertNotIn("Invoke-Expression", executable)
+
+    def test_windows_support_bootstrapper_uses_one_off_tailscale_enrolment(self):
+        source = powershell_executable_lines((ROOT / "win").read_text(encoding="utf-8"))
+        required = (
+            'Read-Host "Paste the one-off, non-pre-approved Tailscale auth key" -AsSecureString',
+            'Join-Path $WorkDir "tailscale-auth-key"',
+            '"--auth-key=file:$TailscaleAuthKeyPath"',
+            'Start-Process -FilePath $TailscaleExe',
+            'AddSeconds(30)',
+            '"NeedsMachineAuth"',
+            'Stop-Process -Id $tailscaleUpProcess.Id -Force -ErrorAction Stop',
+            '$processCleanupFailure = $null',
+            '$processCleanupFailure = $_.Exception.Message',
+            'Remove-Item -LiteralPath $TailscaleAuthKeyPath -Force -ErrorAction Stop',
+            'Test-Path -LiteralPath $TailscaleAuthKeyPath',
+            'Write-Host "Tailscale device registered. Approve it in the Tailscale Machines console."',
+            'AddMinutes(15)',
+            'Start-Sleep -Seconds 10',
+        )
+        for marker in required:
+            self.assertIn(marker, source, f"Missing secure Tailscale enrolment marker: {marker}")
+        start = source.index('Start-Process -FilePath $TailscaleExe')
+        registration = source.index('"NeedsMachineAuth"', start)
+        process_cleanup = source.index('$processCleanupFailure = $null', registration)
+        deletion = source.index('Remove-Item -LiteralPath $TailscaleAuthKeyPath -Force -ErrorAction Stop', process_cleanup)
+        instruction = source.index('Write-Host "Tailscale device registered.', deletion)
+        approval_wait = source.index('AddMinutes(15)', instruction)
+        self.assertLess(start, registration)
+        self.assertLess(registration, deletion)
+        self.assertLess(deletion, instruction)
+        self.assertLess(instruction, approval_wait)
+        self.assertIn('$tailscalePending = ($tailscaleState -eq "NeedsMachineAuth")', source)
+        self.assertIn('if (-not $tailscaleConnected -and -not $tailscalePending)', source)
+        self.assertNotIn('& $TailscaleExe up\n', source)
+        self.assertNotRegex(source, r"(?i)tskey-auth-[a-z0-9_-]{10,}")
 
     def test_windows_support_bootstrapper_verifies_and_fails_closed(self):
         source = powershell_executable_lines((ROOT / "win").read_text(encoding="utf-8"))
@@ -351,7 +386,8 @@ class SiteTests(unittest.TestCase):
         source = powershell_executable_lines((ROOT / "win").read_text(encoding="utf-8"))
         self.assertIn('$env:OS -ne "Windows_NT"', source)
         self.assertNotIn("$IsWindows", source)
-        self.assertIn('Read-Host "Type INSTALL to continue"', source)
+        self.assertIn('Read-Host "Type YES to proceed"', source)
+        self.assertIn('$consent.Trim() -ine "YES"', source)
         self.assertIn('throw "Open Windows PowerShell as Administrator, then rerun the command."', source)
         self.assertNotIn('Start-Process -FilePath "powershell.exe" -Verb RunAs', source)
 

@@ -388,8 +388,8 @@ Write-Host "Any existing permanent RustDesk access secret will be removed."
 Write-Host "Tailscale will block inbound connections to this computer; it is used only to reach CityPlug's private RustDesk server."
 Write-Host "If every safety setting cannot be verified, RustDesk will be stopped and disabled."
 Write-Host ""
-$consent = Read-Host "Type INSTALL to continue"
-if ($consent -cne "INSTALL") {
+$consent = Read-Host "Type YES to proceed"
+if ($consent.Trim() -ine "YES") {
     Write-Host "Cancelled. Nothing was installed."
     return
 }
@@ -414,45 +414,137 @@ try {
     Assert-SignedExecutable -Path $TailscaleExe -AllowedPublisher "^CN=Tailscale Inc\.(?:,|$)" -ExpectedSignerThumbprint $TailscaleSignerThumbprint
     Assert-InstalledVersion -Path $TailscaleExe -ExpectedProductVersion $TailscaleProductVersion
 
-    $tailscaleConnected = $false
+    $tailscaleState = $null
     try {
         $status = ((& $TailscaleExe status --json 2>$null) | Out-String | ConvertFrom-Json)
-        $tailscaleConnected = ($status.BackendState -eq "Running")
+        $tailscaleState = $status.BackendState
     } catch {
-        $tailscaleConnected = $false
+        $tailscaleState = $null
+    }
+    $tailscaleConnected = ($tailscaleState -eq "Running")
+    $tailscalePending = ($tailscaleState -eq "NeedsMachineAuth")
+
+    if (-not $tailscaleConnected -and -not $tailscalePending) {
+        Write-Host ""
+        Write-Host "A one-off CityPlug Tailscale enrolment key is required." -ForegroundColor Yellow
+        Write-Host "The key must not be reusable or pre-approved. It is never written to the installation log."
+        $secureAuthKey = Read-Host "Paste the one-off, non-pre-approved Tailscale auth key" -AsSecureString
+        $TailscaleAuthKeyPath = Join-Path $WorkDir "tailscale-auth-key"
+        $authKeyPointer = [IntPtr]::Zero
+        $authKey = $null
+        $tailscaleUpProcess = $null
+        try {
+            $authKeyPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureAuthKey)
+            $authKey = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($authKeyPointer)
+            if ($authKey -notmatch "^tskey-auth-[A-Za-z0-9_-]{20,}$") {
+                throw "The supplied value is not a valid Tailscale auth key."
+            }
+            [IO.File]::WriteAllText($TailscaleAuthKeyPath, $authKey, [Text.Encoding]::ASCII)
+            $authKey = $null
+            $tailscaleUpProcess = Start-Process -FilePath $TailscaleExe `
+                -ArgumentList @("up", "--auth-key=file:$TailscaleAuthKeyPath", "--shields-up=true", "--auto-update=false") `
+                -WindowStyle Hidden `
+                -PassThru
+
+            $registrationDeadline = (Get-Date).AddSeconds(30)
+            do {
+                Start-Sleep -Milliseconds 250
+                try {
+                    $status = ((& $TailscaleExe status --json 2>$null) | Out-String | ConvertFrom-Json)
+                    $tailscaleState = $status.BackendState
+                } catch {
+                    $tailscaleState = $null
+                }
+                $tailscaleUpProcess.Refresh()
+                if ($tailscaleUpProcess.HasExited -and $tailscaleState -notin @("Running", "NeedsMachineAuth")) {
+                    throw "Tailscale did not accept the one-off enrolment key."
+                }
+            } while ($tailscaleState -notin @("Running", "NeedsMachineAuth") -and (Get-Date) -lt $registrationDeadline)
+
+            if ($tailscaleState -notin @("Running", "NeedsMachineAuth")) {
+                throw "Tailscale did not register this device within 30 seconds."
+            }
+        } finally {
+            $authKey = $null
+            if ($authKeyPointer -ne [IntPtr]::Zero) {
+                [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($authKeyPointer)
+            }
+            $processCleanupFailure = $null
+            if ($null -ne $tailscaleUpProcess) {
+                try {
+                    $tailscaleUpProcess.Refresh()
+                    if (-not $tailscaleUpProcess.HasExited) {
+                        Stop-Process -Id $tailscaleUpProcess.Id -Force -ErrorAction Stop
+                    }
+                    $tailscaleUpProcess.WaitForExit()
+                } catch {
+                    $processCleanupFailure = $_.Exception.Message
+                }
+            }
+
+            $keyCleanupFailure = $null
+            try {
+                if (Test-Path -LiteralPath $TailscaleAuthKeyPath) {
+                    Remove-Item -LiteralPath $TailscaleAuthKeyPath -Force -ErrorAction Stop
+                }
+                if (Test-Path -LiteralPath $TailscaleAuthKeyPath) {
+                    throw "The temporary Tailscale auth-key file still exists after removal."
+                }
+            } catch {
+                $keyCleanupFailure = $_.Exception.Message
+            }
+            if ($null -ne $keyCleanupFailure) {
+                throw "The temporary Tailscale auth-key file could not be removed: $keyCleanupFailure"
+            }
+            if ($null -ne $processCleanupFailure) {
+                throw "The temporary Tailscale enrolment process could not be stopped after the auth-key file was removed: $processCleanupFailure"
+            }
+        }
+        $tailscaleConnected = ($tailscaleState -eq "Running")
+        $tailscalePending = ($tailscaleState -eq "NeedsMachineAuth")
     }
 
-    if (-not $tailscaleConnected) {
-        Write-Host ""
-        Write-Host "Tailscale sign-in is required." -ForegroundColor Yellow
-        Write-Host "Sign in with the account CityPlug has authorised for the shared support server."
-        & $TailscaleExe up
-        if ($LASTEXITCODE -ne 0) {
-            throw "Tailscale sign-in did not complete."
-        }
+    if ($tailscalePending) {
+        Write-Host "Tailscale device registered. Approve it in the Tailscale Machines console." -ForegroundColor Yellow
     }
 
     & $TailscaleExe set --shields-up=true --auto-update=false | Out-Null
     if ($LASTEXITCODE -ne 0) {
-        throw "Tailscale connected, but its inbound shield and update policy could not be applied."
+        throw "Tailscale registered, but its inbound shield and update policy could not be applied."
     }
-    $status = ((& $TailscaleExe status --json 2>$null) | Out-String | ConvertFrom-Json)
-    if ($status.BackendState -ne "Running") {
-        throw "Tailscale is not connected after sign-in."
+
+    $approvalDeadline = (Get-Date).AddMinutes(15)
+    $tailscaleReady = $false
+    do {
+        try {
+            $status = ((& $TailscaleExe status --json 2>$null) | Out-String | ConvertFrom-Json)
+            $prefs = ((& $TailscaleExe debug prefs 2>$null) | Out-String | ConvertFrom-Json)
+            $portsReachable = ($status.BackendState -eq "Running")
+            if ($portsReachable) {
+                foreach ($port in @(21116, 21117)) {
+                    if (-not (Test-NetConnection -ComputerName $RustDeskServer -Port $port -InformationLevel Quiet -WarningAction SilentlyContinue)) {
+                        $portsReachable = $false
+                        break
+                    }
+                }
+            }
+            $tailscaleReady = ($portsReachable -and $prefs.ShieldsUp -and -not $prefs.AutoUpdate.Apply)
+        } catch {
+            $tailscaleReady = $false
+        }
+        if (-not $tailscaleReady -and (Get-Date) -lt $approvalDeadline) {
+            Write-Host "Waiting for CityPlug to approve this device in the Tailscale admin console..."
+            Start-Sleep -Seconds 10
+        }
+    } while (-not $tailscaleReady -and (Get-Date) -lt $approvalDeadline)
+
+    if (-not $tailscaleReady) {
+        throw "Tailscale approval or private RustDesk connectivity was not completed within 15 minutes. Approve the device in the Tailscale Machines console, then rerun this command."
     }
-    $prefs = ((& $TailscaleExe debug prefs 2>$null) | Out-String | ConvertFrom-Json)
     if (-not $prefs.ShieldsUp -or $prefs.AutoUpdate.Apply) {
         throw "Tailscale did not retain inbound shielding and its disabled automatic-update policy."
     }
-    Write-Log "Tailscale is connected with inbound connections blocked."
-
-    foreach ($port in @(21116, 21117)) {
-        $reachable = Test-NetConnection -ComputerName $RustDeskServer -Port $port -InformationLevel Quiet -WarningAction SilentlyContinue
-        if (-not $reachable) {
-            throw "CityPlug's private RustDesk server is not reachable on TCP $port. Confirm that CityPlug shared the support node with this Tailscale account, then rerun the command."
-        }
-    }
-    Write-Log "Private RustDesk signal and relay ports are reachable through Tailscale."
+    Write-Log "Tailscale is approved, inbound connections are blocked, and the private RustDesk ports are reachable."
 
     Invoke-VerifiedDownload -Uri $RustDeskUri -Destination $RustDeskMsi -ExpectedSha256 $RustDeskSha256 -AllowedPublisher "^CN=PURSLANE(?:,|$)" -ExpectedSignerThumbprint $RustDeskSignerThumbprint
     Assert-RustDeskQuarantineEffective
