@@ -36,7 +36,7 @@ The extensionless `/win` route is a PowerShell bootstrapper intended to be launc
 
     irm https://cityplug.co.uk/win | iex
 
-It installs pinned official Tailscale and RustDesk MSI packages only after SHA-256, Authenticode subject, signer-certificate thumbprint, and exact packaged-build verification. Before the RustDesk MSI can run, the bootstrapper requires Windows Defender Firewall to be running with every effective profile enabled, local rules permitted, and verified inbound/outbound RustDesk block rules present in `ActiveStore`. Tailscale authentication is interactive; never add an auth key, reusable enrolment token, RustDesk permanent access secret, or other credential to this public repository. Run the command from an already elevated 64-bit Windows 10/11 PowerShell session.
+It installs pinned official Tailscale and RustDesk MSI packages only after SHA-256, Authenticode subject, signer-certificate thumbprint, and exact packaged-build verification. Before the RustDesk MSI can run, the bootstrapper requires Windows Defender Firewall to be running with every effective profile enabled, local rules permitted, and verified inbound/outbound RustDesk block rules present in `ActiveStore`. Tailscale enrolment uses a one-off, non-pre-approved auth key entered securely at runtime; never add an auth key, reusable enrolment token, RustDesk permanent access secret, or other credential to this public repository. Run the command from an already elevated 64-bit Windows 10/11 PowerShell session.
 
 The client is configured for attended support only:
 
@@ -48,9 +48,17 @@ The client is configured for attended support only:
 - Tailscale shields-up blocks incoming connections to the customer's computer;
 - RustDesk remains under verified bidirectional firewall quarantine until every attended-only setting and service state passes readback;
 - any incomplete or unverifiable RustDesk configuration leaves its process and service stopped and disabled;
-- the script records operational messages under `%ProgramData%\CityPlug\SupportBootstrap` but does not capture the Tailscale sign-in URL.
+- the script records operational messages under `%ProgramData%\CityPlug\SupportBootstrap`, accepts the auth key through a masked prompt, passes only a protected temporary key file to Tailscale, and removes that file immediately after enrolment;
+- after registration, the script waits up to 15 minutes for console approval and verified connectivity to the private RustDesk server.
 
-Before onboarding a customer, share only the private `apollo-rustdesk` Tailscale node with that customer's Tailscale identity. Do not grant general subnet access. The bootstrapper deliberately contains no mechanism to share nodes or enrol a device into CityPlug's tailnet.
+Before onboarding a customer:
+
+1. Enable **Device approval** for the CityPlug tailnet.
+2. In **Settings → Keys**, generate a short-expiry, **one-off** key with **Pre-approved disabled** and no reusable capability.
+3. Deliver that key to the operator through an approved private channel; never place it in the public `/win` script, URL, ticket, or log.
+4. When the script reports that the device is registered, approve the pending machine in **Machines**. The script resumes automatically after connectivity is available.
+
+The enrolled client joins only the CityPlug tailnet permissions granted by its user/tag and remains shielded from inbound tailnet connections. Keep ACL/grant policy limited to the private `apollo-rustdesk` signal/relay service and required ports; do not grant general subnet access.
 
 When updating either dependency:
 
