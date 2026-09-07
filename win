@@ -442,7 +442,7 @@ try {
             [IO.File]::WriteAllText($TailscaleAuthKeyPath, $authKey, [Text.Encoding]::ASCII)
             $authKey = $null
             $tailscaleUpProcess = Start-Process -FilePath $TailscaleExe `
-                -ArgumentList @("up", "--auth-key=file:$TailscaleAuthKeyPath", "--shields-up=true", "--auto-update=false") `
+                -ArgumentList @("up", "--auth-key=file:$TailscaleAuthKeyPath", "--shields-up=true") `
                 -WindowStyle Hidden `
                 -PassThru
 
