@@ -306,6 +306,8 @@ class SiteTests(unittest.TestCase):
             'Join-Path $WorkDir "tailscale-auth-key"',
             '"--auth-key=file:$TailscaleAuthKeyPath"',
             'Start-Process -FilePath $TailscaleExe',
+            '-ArgumentList @("up", "--auth-key=file:$TailscaleAuthKeyPath", "--shields-up=true")',
+            '& $TailscaleExe set --shields-up=true --auto-update=false',
             'AddSeconds(30)',
             '"NeedsMachineAuth"',
             'Stop-Process -Id $tailscaleUpProcess.Id -Force -ErrorAction Stop',
