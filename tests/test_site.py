@@ -423,7 +423,7 @@ class SiteTests(unittest.TestCase):
                 if not href or href.startswith(("#", "mailto:", "http://", "https://")):
                     continue
                 path = urlparse(href).path
-                candidate = ROOT / ("index.html" if path == "/" else path.lstrip("/") + ".html")
+                candidate = ROOT / (path.lstrip("/") + "index.html" if path.endswith("/") else path.lstrip("/") + ".html")
                 self.assertTrue(candidate.is_file(), f"{name}: broken internal link {href}")
     def test_quote_form_is_low_friction_and_service_links_preselect_it(self):
         homepage = parse("index.html")
