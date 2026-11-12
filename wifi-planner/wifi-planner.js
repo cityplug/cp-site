@@ -15,9 +15,11 @@
   var DEFAULT_CONFIG = {
     company: "CityPlug",
     website: "cityplug.co.uk",
+    email: "info@cityplug.co.uk",
+    areas: "London · Kent · Essex",
     quoteUrl: "https://www.cityplug.co.uk/#contact",
     showHeader: true,                 // set false when embedding inside an existing page that has its own heading
-    accentRGB: [10, 108, 255],        // PDF accent colour (match --cpwp-accent)
+    accentRGB: [15, 98, 234],        // PDF accent colour (match --cpwp-accent)
 
     coveragePerAP: { modern: 110, brick: 80, solid: 55 },   // m² a standard ceiling AP (U7 Pro) covers indoors, by wall type
     devicesPerPerson: { home: 8, business: 3 },
@@ -25,17 +27,17 @@
 
     /* Gateways, smallest first.
        cap   = rough relative capacity for the load meter (not a Ubiquiti figure; calibrate against calculator.ui.com)
-       maxTB = largest recording storage it takes; maxCams = Ubiquiti's managed-camera figure at 2K (HD for UDR models) */
+       maxTB = largest recording storage it takes; maxCams = Ubiquiti's Protect camera figure at 2K (G5 cameras are 2K). UDM Pro / SE uses the lower SE figure. */
     gateways: [
       { id:"ux7", lan:1,       name:"Express 7",    full:"UniFi Express 7",              shape:"cube",  cap:55,  protect:false, maxTB:0,   maxCams:0,  media:"",                       multigig:true,  homeOnly:true,  wifi:true, smallOnly:true, blurb:"Router + Wi-Fi 7 in one small box (no CCTV)" },
       { id:"ucg-ultra", lan:4, name:"UCG Ultra",    full:"UniFi Cloud Gateway Ultra",    shape:"desk",  cap:60,  protect:false, maxTB:0,   maxCams:0,  media:"",                       multigig:false, homeOnly:true,  blurb:"Compact router, no CCTV recording" },
-      { id:"udr7", lan:3,      name:"UDR7",         full:"UniFi Dream Router 7",         shape:"tower", cap:70,  protect:true,  maxTB:0.5, maxCams:5,  media:"microSD card",           multigig:false, homeOnly:true,  wifi:true, blurb:"All-in-one with built-in Wi-Fi 7" },
-      { id:"udr5g", lan:3,     name:"UDR 5G Max",   full:"UniFi Dream Router 5G Max",    shape:"tower", cap:70,  protect:true,  maxTB:0.5, maxCams:5,  media:"microSD card",           multigig:false, homeOnly:true,  wifi:true, manual:true, blurb:"Built-in 5G for mobile broadband" },
+      { id:"udr7", lan:3,      name:"UDR7",         full:"UniFi Dream Router 7",         shape:"tower", cap:70,  protect:true,  maxTB:0.5, maxCams:2,  media:"microSD card",           multigig:false, homeOnly:true,  wifi:true, blurb:"All-in-one with built-in Wi-Fi 7" },
+      { id:"udr5g", lan:3,     name:"UDR 5G Max",   full:"UniFi Dream Router 5G Max",    shape:"tower", cap:70,  protect:true,  maxTB:0.5, maxCams:2,  media:"microSD card",           multigig:false, homeOnly:true,  wifi:true, manual:true, blurb:"Built-in 5G for mobile broadband" },
       { id:"ucg-max", lan:4,   name:"UCG Max",      full:"UniFi Cloud Gateway Max",      shape:"desk",  cap:110, protect:true,  maxTB:2,   maxCams:8,  media:"NVMe SSD",               multigig:false, homeOnly:false, blurb:"Network + CCTV, under 2 Gb internet" },
       { id:"ucg-fiber", lan:4, name:"UCG Fiber",    full:"UniFi Cloud Gateway Fiber",    shape:"desk",  cap:160, protect:true,  maxTB:2,   maxCams:8,  media:"NVMe SSD + M.2 tray",    multigig:true,  homeOnly:false, blurb:"Multi-gig fibre, 10G ports" },
-      { id:"udm-pro", lan:8,   name:"UDM Pro / SE", full:"UniFi Dream Machine Pro / SE", shape:"rack",  cap:140, protect:true,  maxTB:20,  maxCams:14, media:"3.5\" surveillance HDD", multigig:true,  homeOnly:false, blurb:"Rack-mount, one drive bay" },
-      { id:"udm-pm", lan:8,    name:"UDM Pro Max",  full:"UniFi Dream Machine Pro Max",  shape:"rack",  cap:220, protect:true,  maxTB:20,  maxCams:25, media:"2 x 3.5\" HDD (mirrored)", multigig:true, homeOnly:false, blurb:"Rack-mount, two mirrored drive bays" },
-      { id:"udm-beast", lan:8, name:"UDM Beast",    full:"UniFi Dream Machine Beast",    shape:"rack",  cap:600, protect:true,  maxTB:20,  maxCams:60, media:"2 x 3.5\" HDD (mirrored)", multigig:true, homeOnly:false, blurb:"Large sites, up to 60 2K cameras" }
+      { id:"udm-pro", lan:8,   name:"UDM Pro / SE", full:"UniFi Dream Machine Pro / SE", shape:"rack",  cap:140, protect:true,  maxTB:20,  maxCams:12, media:"3.5\" surveillance HDD", multigig:true,  homeOnly:false, blurb:"Rack-mount, one drive bay" },
+      { id:"udm-pm", lan:8,    name:"UDM Pro Max",  full:"UniFi Dream Machine Pro Max",  shape:"rack",  cap:220, protect:true,  maxTB:20,  maxCams:25, bays:2, media:"3.5\" surveillance HDD", multigig:true, homeOnly:false, blurb:"Rack-mount, two mirrored drive bays" },
+      { id:"udm-beast", lan:8, name:"UDM Beast",    full:"UniFi Dream Machine Beast",    shape:"rack",  cap:600, protect:true,  maxTB:20,  maxCams:60, bays:2, media:"3.5\" surveillance HDD", multigig:true, homeOnly:false, blurb:"Large sites, up to 60 2K cameras" }
     ],
     load: { base:15, perAP:1.5, perClient:0.15, perCamera:6, perOnvifCamera:6, perPhone:0.5, ips:10 },
     targetLoad: 0.6,
@@ -65,11 +67,20 @@
       { id:"pm24",   name:"Pro Max 24 PoE", full:"UniFi Switch Pro Max 24 PoE", shape:"switch",   ports:24, poe:24, budget:400 },
       { id:"pm48",   name:"Pro Max 48 PoE", full:"UniFi Switch Pro Max 48 PoE", shape:"switch",   ports:48, poe:48, budget:720 }
     ],
+    /* Separate recorders (UniFi Protect), smallest first. maxCams at 2K, bays = 3.5" drive bays (max 20 TB per drive here). */
+    nvrs: [
+      { id:"unvr-instant", name:"UNVR Instant", full:"UniFi NVR Instant",               shape:"desk", bays:1,  maxCams:8,  blurb:"1 drive bay, built-in PoE ports for cameras" },
+      { id:"unvr",         name:"UNVR",         full:"UniFi Network Video Recorder",    shape:"rack", bays:4,  maxCams:30, blurb:"4 drive bays, rack-mount" },
+      { id:"unvr-pro",     name:"UNVR Pro",     full:"UniFi Network Video Recorder Pro",shape:"rack", bays:7,  maxCams:35, blurb:"7 drive bays, rack-mount" },
+      { id:"envr",         name:"Enterprise NVR", full:"UniFi Enterprise NVR",          shape:"rack", bays:16, maxCams:70, blurb:"16 drive bays, large sites" }
+    ],
+    nvrDriveSizesTB: [4, 8, 12, 16, 20],
     roomSwitches: ["flexmini", "flexmini25"],   // offered as extra small switches for a TV / desk
     injector: "UniFi PoE injector",
     controller: "UniFi Cloud Key (to manage the UniFi kit)",
+    maxSwitches: 12,
     poeHeadroom: 0.9,                 // use at most 90% of a switch's PoE budget (figures are max draw, so this is conservative)
-    watts: { camera:12, onvifCamera:10, phone:6, aiPort:15 },
+    watts: { camera:10, onvifCamera:10, phone:6, aiPort:15 },   // camera: G5 Bullet 5 W, G5 Dome 7.7 W, G5 Pro 10 W, so 10 W is a safe planning figure
 
     cctv: {
       gbPerCameraDay: 22,             // ~2 Mbps continuous per 2K camera. 4K is roughly double.
@@ -81,6 +92,7 @@
     bridge: "UniFi Building-to-Building Bridge",
     ups: "UPS (battery backup) for network kit",
 
+    pdfBrand: { logo: "brand/logo.png", stamp: "brand/stamp.png" },   // same-origin images for the PDF letterhead
     pdfLibs: {
       jspdf:     ["vendor/jspdf.umd.min.js"],
       autotable: ["vendor/jspdf.plugin.autotable.min.js"]
@@ -99,6 +111,7 @@
   }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function fmtDays(d) { return d <= 0.5 ? "½ day" : (d % 1 ? Math.floor(d) + "½ days" : d + " day" + (d > 1 ? "s" : "")); }
+  function aAn(t) { return /^(8|11|18|80)\b|^[aeiou]/i.test(String(t)) ? "an " + t : "a " + t; }
   function fmtTB(tb) { return tb >= 1 ? (Math.round(tb * 10) / 10) + " TB" : Math.round(tb * 1000) + " GB"; }
   function loadScript(srcs) {
     return srcs.reduce(function (p, src) {
@@ -114,7 +127,7 @@
   }
 
   var BEDS = { "1-2": 65, "3": 95, "4": 130, "5+": 190 };
-  var LIMITS = { people: [1, 200], guests: [0, 500], camsNew: [0, 64], camsExisting: [0, 64], wired: [0, 48], roomSwQty: [0, 10] };
+  var LIMITS = { people: [1, 200], guests: [0, 500], camsNew: [0, 64], camsExisting: [0, 64], wired: [0, 48], roomSwQty: [0, 10], apQty: [0, 30] };
   var TYPE_LABEL = { house: "House", flat: "Flat", office: "Office", shop: "Shop", hospitality: "Hospitality", warehouse: "Warehouse / unit" };
   var OUT_LABEL = { garden: "garden", patio: "patio", carpark: "car park" };
 
@@ -128,7 +141,7 @@
       uses: ["streaming", "homeworking"],
       camsNew: 4, camsExisting: 0, camKind: "ip", camCabled: "yes", retention: 30, smart: "no",
       internet: "fttp", cabling: "none", routes: "mixed", mount: "ceiling", wired: 2, notes: "",
-      gw: null, ap: null, sw: null, roomSw: "flexmini", roomSwQty: 0
+      gw: null, ap: null, sw: null, rec: null, apAdj: {}, roomSw: "flexmini", roomSwQty: 0
     };
     if (CONFIG.project) S.project = CONFIG.project;
     try { var qp = new URLSearchParams(location.search).get("project"); if (qp) S.project = qp; } catch (e) {}
@@ -222,11 +235,14 @@
       for (i = 0; i < S.floors; i++) floors.push({ name: names[i] || "Floor " + i, area: perFloor });
       if (S.basement) floors.unshift({ name: "Basement", area: perFloor * 0.6 });
       if (S.loft) floors.push({ name: "Loft room", area: perFloor * 0.5 });
+      floors.forEach(function (f) { f.key = f.name; });
 
       var devices = biz ? S.people * CONFIG.devicesPerPerson.business + S.guests * 1.2
                         : S.people * CONFIG.devicesPerPerson.home + (S.uses.indexOf("smarthome") >= 0 ? 15 : 0);
+      var adj = S.apAdj || {};
+      function adjOf(key) { return +adj[key] || 0; }
 
-      // Access points ("none" = no indoor APs)
+      // Access points ("none" = no indoor APs). Suggested counts first, the customer's +/- changes on top.
       function covFor(a) { var c = CONFIG.coveragePerAP[S.walls] * a.cov; if (S.type === "warehouse") c *= 2.2; else if (S.type === "office" || S.type === "shop") c *= 1.2; return c; }
       function apCountFor(a) {
         var c = covFor(a);
@@ -238,21 +254,23 @@
       if (recAP.id === "u7-pro" && !biz && S.floors === 1 && apById("u7-lite") && apCountFor(apById("u7-lite")) <= apCountFor(recAP)) recAP = apById("u7-lite");
       var noAP = S.ap === "none";
       var selAP = noAP ? null : (apById(S.ap) || recAP);
-      var indoor = 0;
       if (selAP) {
         var cov = covFor(selAP);
         floors.forEach(function (f) { f.aps = Math.max(1, Math.ceil(f.area / cov)); });
         var covAPs = floors.reduce(function (a, f) { return a + f.aps; }, 0);
-        indoor = Math.max(covAPs, Math.ceil(devices / selAP.clients));
-        var extra = indoor - covAPs, k = 0;
+        var extra = Math.max(covAPs, Math.ceil(devices / selAP.clients)) - covAPs, k = 0;
         var bySize = floors.slice().sort(function (a, b) { return b.area - a.area; });
         while (extra > 0) { bySize[k % bySize.length].aps++; extra--; k++; }
       } else floors.forEach(function (f) { f.aps = 0; });
 
       var outdoorAreas = S.outside.filter(function (o) { return ["garden", "patio", "carpark"].indexOf(o) >= 0; });
-      var outdoorAPs = outdoorAreas.length;
-      var outbuildAPs = S.outside.filter(function (o) { return o === "outbuilding" || o === "office"; }).length;
-      var totalAPs = indoor + outdoorAPs + outbuildAPs;
+      var outdoorSugg = outdoorAreas.length;
+      var outbuildSugg = S.outside.filter(function (o) { return o === "outbuilding" || o === "office"; }).length;
+      function withAdj(sugg, key) { return Math.max(0, Math.min(LIMITS.apQty[1], sugg + adjOf(key))); }
+      var outdoorAPs = withAdj(outdoorSugg, "outdoor");
+      var outbuildAPs = withAdj(outbuildSugg, "outbuild");
+      // provisional count (before the gateway's built-in Wi-Fi is taken off) for sizing the gateway
+      var provisionalAPs = floors.reduce(function (a, f) { return a + (selAP ? withAdj(f.aps, f.key) : 0); }, 0) + outdoorAPs + outbuildAPs;
 
       // CCTV
       var cctv = hasCCTV(), analogue = S.camKind === "analogue";
@@ -262,54 +280,134 @@
       var cams = newCams + onvifCams;
       var aiPorts = onvifCams && S.smart === "yes" ? Math.ceil(onvifCams / CONFIG.cctv.camsPerAIPort) : 0;
       var storageTB = cams * CONFIG.cctv.gbPerCameraDay * (+S.retention) / 1000;
+      var needTB = storageTB * CONFIG.cctv.driveHeadroom;
       var sizes = CONFIG.cctv.driveSizesTB;
-      var driveTB = cams ? (sizes.filter(function (x) { return x >= storageTB * CONFIG.cctv.driveHeadroom; })[0] || sizes[sizes.length - 1]) : 0;
+      var driveTB = cams ? (sizes.filter(function (x) { return x >= needTB; })[0] || sizes[sizes.length - 1]) : 0;
+      // drives for a recorder with n bays: fewest drives, then smallest size; 2+ drives get one extra for protection (RAID)
+      function drivesFor(bays) {
+        if (!cams) return null;
+        var best = null;
+        CONFIG.nvrDriveSizesTB.forEach(function (sz) {
+          var data = Math.max(1, Math.ceil(needTB / sz)), count = bays === 1 ? data : data + 1;
+          if (count > bays) return;
+          if (!best || count < best.count || (count === best.count && sz < best.size)) best = { size: sz, count: count, protected: count > data };
+        });
+        return best;
+      }
 
-      // Gateway ("none" = customer keeps their own router)
+      // Gateway and recording. Recording on the gateway needs Protect, enough camera capacity and room for the drive.
       var phones = S.uses.indexOf("voip") >= 0 ? Math.max(1, Math.ceil(S.people / 2)) : 0;
       var L = CONFIG.load;
-      var loadUnits = L.base + totalAPs * L.perAP + devices * L.perClient + newCams * L.perCamera + onvifCams * L.perOnvifCamera + phones * L.perPhone + (biz ? L.ips : 0);
-      function gwOk(g) { return (!cams || (g.protect && cams <= g.maxCams)) && (S.internet !== "multigig" || g.multigig); }
-      function baseFit(g) { return gwOk(g) && !(biz && g.homeOnly) && !g.manual && !(g.smallOnly && (indoor > 1 || outdoorAPs + outbuildAPs > 0 || S.wired > 1)) && loadUnits / g.cap <= CONFIG.targetLoad; }
-      var G = CONFIG.gateways;
-      var recG = G.filter(function (g) { return baseFit(g) && (!cams || g.maxTB >= driveTB); })[0] || G.filter(baseFit)[0] || G[G.length - 1];
+      function loadFor(onGw) {
+        return L.base + provisionalAPs * L.perAP + devices * L.perClient + (onGw ? newCams * L.perCamera + onvifCams * L.perOnvifCamera : cams) + phones * L.perPhone + (biz ? L.ips : 0);
+      }
+      var loadOnGw = loadFor(true), loadOffGw = loadFor(false);
+      function gwStore(g) { return g.bays > 1 ? "2 × " + fmtTB(driveTB) + " mirrored hard drives" : aAn(fmtTB(driveTB)) + " " + g.media; }
+      function canRecord(g) { return !!g && g.protect && cams <= g.maxCams && g.maxTB >= driveTB; }
+      function nvrFits(n) { return cams <= n.maxCams && !!drivesFor(n.bays); }
+      function speedOk(g) { return S.internet !== "multigig" || g.multigig; }
+      function baseFit(g, onGw) {
+        return speedOk(g) && !(biz && g.homeOnly) && !g.manual &&
+          !(g.smallOnly && (provisionalAPs > 1 || S.wired > 1)) && (onGw ? loadOnGw : loadOffGw) / g.cap <= CONFIG.targetLoad;
+      }
+      var G = CONFIG.gateways, NV = CONFIG.nvrs;
+      var recNVR = cams ? (NV.filter(nvrFits)[0] || NV[NV.length - 1]) : null;
+      var gwThatRecords = cams ? G.filter(function (g) { return baseFit(g, true) && canRecord(g); })[0] : null;
+      var gwPlain = G.filter(function (g) { return baseFit(g, false); })[0] || G[G.length - 1];
+      var userNVR = NV.filter(function (n) { return n.id === S.rec; })[0] || null;
+      // which way the recommendation goes: on the gateway when one fits, otherwise a separate NVR
+      // homes: a rack-mount gateway just to record is overkill when a desktop recorder does it
+      var preferNVR = !biz && gwThatRecords && gwThatRecords.shape === "rack" && recNVR && recNVR.shape !== "rack" && gwPlain.shape !== "rack";
+      var wantGwRec = cams > 0 && !userNVR && (S.rec === "gw" || (!!gwThatRecords && !preferNVR));
+      var recG = (wantGwRec && gwThatRecords) || gwPlain;
       var noGW = S.gw === "none";
       var selG = noGW ? null : (G.filter(function (g) { return g.id === S.gw; })[0] || recG);
-      var gwLoad = selG ? loadUnits / selG.cap : 0;
-      var needNVR = cams > 0 && (!selG || !selG.protect || cams > selG.maxCams || selG.maxTB < driveTB);
+      var onGateway = cams > 0 && !userNVR && canRecord(selG);
+      var needNVR = cams > 0 && !onGateway;
+      var selNVR = needNVR ? (userNVR || recNVR) : null;
+      var nvrDrives = selNVR ? drivesFor(selNVR.bays) : null;
+      var recRec = cams ? (canRecord(selG) ? "gw" : recNVR.id) : null;          // recommended recording option for the current gateway
+      var recReason = "";
+      if (cams) {
+        if (onGateway) recReason = "No. The " + selG.name + " records all " + cams + " camera" + (cams > 1 ? "s" : "") + " itself, on " + gwStore(selG) + ".";
+        else if (!userNVR && selG === recG && gwThatRecords && preferNVR) {
+          var desk = G.filter(function (g) { return g.protect && g.shape !== "rack" && !g.manual; }).pop();
+          recReason = "Yes. " + (cams > desk.maxCams ? cams + " cameras is more than a desktop gateway records (" + desk.maxCams + ")" : S.retention + " days from " + cams + " camera" + (cams > 1 ? "s" : "") + " needs about " + fmtTB(storageTB) + ", more than a desktop gateway holds (" + fmtTB(desk.maxTB) + ")") +
+            ". A " + recNVR.name + " records them and the gateway stays small. Recording on the gateway would mean a rack-mount " + gwThatRecords.name + ".";
+        }
+        else if (userNVR) recReason = "Yes, you chose a separate recorder. The gateway then only runs the network" + (selG && selG !== gwThatRecords ? ", so a smaller one can do the job" : "") + ".";
+        else if (!selG) recReason = "Yes. Without a UniFi gateway, cameras need their own UniFi recorder.";
+        else if (!selG.protect) recReason = "Yes. The " + selG.name + " can't record cameras.";
+        else if (cams > selG.maxCams) recReason = "Yes. " + cams + " cameras is more than the " + selG.name + " records (" + selG.maxCams + " at 2K).";
+        else recReason = "Yes. " + fmtTB(storageTB) + " of recordings won't fit in the " + selG.name + " (" + fmtTB(selG.maxTB) + " max).";
+      }
+      var gwLoad = selG ? (onGateway ? loadOnGw : loadOffGw) / selG.cap : 0;
+      var loadUnits = onGateway ? loadOnGw : loadOffGw;
       var gwWarn = [];
       if (selG) {
-        if (cams && !selG.protect) gwWarn.push("This gateway can't record cameras, so a separate UniFi recorder is added to the kit list.");
-        else if (cams > selG.maxCams) gwWarn.push("Ubiquiti rates this gateway for about " + selG.maxCams + " cameras, so a separate UniFi recorder is added for " + cams + ".");
-        else if (needNVR) gwWarn.push(fmtTB(storageTB) + " of recordings won't fit in this gateway, so a separate UniFi recorder is added to the kit list.");
-        if (S.internet === "multigig" && !selG.multigig) gwWarn.push("This gateway won't run multi-gig fibre at full speed.");
+        if (cams && S.rec === "gw" && !onGateway) gwWarn.push("The " + selG.name + " can't record " + (cams > selG.maxCams && selG.protect ? "this many cameras" : "these cameras") + ", so a separate UniFi recorder is added.");
+        if (!speedOk(selG)) gwWarn.push("This gateway won't run multi-gig fibre at full speed.");
         if (gwLoad > 0.85) gwWarn.push("This gateway would be close to its limit with this setup.");
       }
+      var nvrWarn = [];
+      if (selNVR && !nvrFits(selNVR)) nvrWarn.push("The " + selNVR.name + " is too small for " + cams + " cameras and " + fmtTB(storageTB) + " of recordings. The " + recNVR.name + " fits.");
+
       // gateway with built-in Wi-Fi covers one indoor area (placed where the internet comes in)
       var builtIn = selG && selG.wifi ? 1 : 0, builtInFloor = null;
-      if (builtIn && indoor > 0) {
+      if (builtIn && selAP) {
         var gf = floors.filter(function (f) { return f.name !== "Basement" && f.aps > 0; })[0] || floors.filter(function (f) { return f.aps > 0; })[0];
-        if (gf) { gf.aps--; indoor--; totalAPs--; builtInFloor = gf.name; }
+        if (gf) { gf.aps--; builtInFloor = gf.name; }
       }
       if (builtIn && !builtInFloor) builtInFloor = (floors.filter(function (f) { return f.name !== "Basement"; })[0] || floors[0]).name;
 
-      // Switch ("none" = no switch, PoE injectors instead; Flex Minis have no PoE output)
-      var apWatts = indoor * (selAP ? selAP.watts : 0) + outdoorAPs * CONFIG.apOutdoor.watts + outbuildAPs * CONFIG.apOutbuilding.watts;
+      // apply the customer's quantity changes
+      floors.forEach(function (f) { f.sugg = f.aps; f.adj = selAP ? adjOf(f.key) : 0; f.aps = selAP ? withAdj(f.aps, f.key) : 0; });
+      var indoor = floors.reduce(function (a, f) { return a + f.aps; }, 0);
+      var indoorSugg = floors.reduce(function (a, f) { return a + f.sugg; }, 0);
+      var totalAPs = indoor + outdoorAPs + outbuildAPs;
+      var apChanged = floors.some(function (f) { return f.adj; }) || adjOf("outdoor") || adjOf("outbuild") ? true : false;
+
+      // Switch. Works out how many of a model are needed: PoE ports, total ports (incl. links between switches) and power.
       var W = CONFIG.watts;
-      var poeWatts = apWatts + newCams * W.camera + onvifCams * W.onvifCamera + phones * W.phone + aiPorts * W.aiPort;
+      var apWatts = indoor * (selAP ? selAP.watts : 0) + outdoorAPs * CONFIG.apOutdoor.watts + outbuildAPs * CONFIG.apOutbuilding.watts;
+      var camWatts = newCams * W.camera + onvifCams * W.onvifCamera;
+      var poeWatts = apWatts + camWatts + phones * W.phone + aiPorts * W.aiPort;
       var poeNeed = totalAPs + cams + phones + aiPorts;
-      var portNeed = poeNeed + S.wired + 1;
-      function swCountFor(sw) {
-        if (!sw.poe) return Math.max(1, Math.ceil(portNeed / sw.ports));
-        return Math.max(1, Math.ceil(poeNeed / sw.poe), Math.ceil(portNeed / sw.ports), Math.ceil(poeWatts / (sw.budget * CONFIG.poeHeadroom)));
+      var portNeed = poeNeed + S.wired + 1 + (selNVR ? 1 : 0);
+      function swFitsCount(sw, c) {
+        var ports = c * sw.ports - 2 * (c - 1);
+        if (ports < portNeed) return false;
+        if (!sw.poe) return true;
+        return c * sw.poe >= poeNeed && c * sw.budget * CONFIG.poeHeadroom >= poeWatts;
       }
-      function swFits(sw) { return swCountFor(sw) === 1 && (sw.poe > 0 || poeNeed === 0); }
+      function swCountFor(sw) { for (var c = 1; c < CONFIG.maxSwitches; c++) if (swFitsCount(sw, c)) return c; return CONFIG.maxSwitches; }
+      function swLimits(sw) {   // what one of these runs out of first
+        var r = [];
+        if (sw.poe && sw.poe < poeNeed) r.push("PoE ports");
+        if (sw.poe && sw.budget * CONFIG.poeHeadroom < poeWatts) r.push("power");
+        if (sw.ports < portNeed) r.push("total ports");
+        return r;
+      }
       var SWL = CONFIG.switches;
       var recNoSW = poeNeed === 0 && !!selG && portNeed - 1 <= (selG.lan || 0);   // gateway's own ports are enough
-      var recSW = recNoSW ? null : (SWL.filter(swFits)[0] || SWL[SWL.length - 1]);
+      var recSW = null;
+      if (!recNoSW) {
+        var cands = SWL.filter(function (x) { return x.poe > 0 || poeNeed === 0; });
+        recSW = cands.filter(function (x) { return swCountFor(x) === 1; })[0] ||
+          cands.slice().sort(function (a, b) { return swCountFor(a) - swCountFor(b) || a.budget - b.budget; })[0];
+      }
       var noSW = S.sw === "none" || (!S.sw && recNoSW);
       var selSW = noSW ? null : (SWL.filter(function (x) { return x.id === S.sw; })[0] || recSW);
       var swCount = selSW ? swCountFor(selSW) : 0;
+      var swMulti = swCount > 1;
+      var swNote = "";
+      if (selSW && swMulti) {
+        var lim = swLimits(selSW);
+        swNote = "One " + selSW.name + " isn't enough. It has " + (selSW.poe ? selSW.poe + " PoE ports and " + selSW.budget + " W" : selSW.ports + " ports") +
+          ", and this plan needs " + (selSW.poe ? poeNeed + " PoE ports and about " + Math.round(poeWatts) + " W" : portNeed + " ports") +
+          (lim.length ? " (short on " + lim.join(", ").replace(/, ([^,]*)$/, " and $1") + ")" : "") + ". So the plan uses " + swCount + " of them, linked together, and the kit list, ports and cabinet are updated to match." +
+          (recSW && recSW !== selSW && swCountFor(recSW) === 1 ? " A single " + recSW.name + " would also do it." : "");
+      }
       var injectors = (!selSW || !selSW.poe) ? poeNeed : 0;
       var roomSw = SWL.filter(function (x) { return x.id === S.roomSw; })[0] || SWL[0];
 
@@ -319,10 +417,12 @@
       var apRuns = Math.round((indoor + S.wired + phones) * reuse) + outdoorAPs + outbuildAPs;
       var newRuns = apRuns + camRuns;
       var runs = indoor + outdoorAPs + outbuildAPs + S.wired + phones + camRuns;
-      var cabinet = (selG && selG.shape === "rack") || runs >= 10 ? "9U wall cabinet with patch panel" : runs >= 6 ? "6U wall cabinet with patch panel" : "Compact comms shelf / small cabinet";
+      var rackU = (selG && selG.shape === "rack" ? 1 : 0) + (selNVR && selNVR.shape === "rack" ? (selNVR.bays > 4 ? 2 : 1) : 0) +
+        (selSW && selSW.shape === "switch" ? swCount : 0) + Math.ceil(runs / 24) + 1;
+      var cabinet = rackU >= 8 || runs > 40 ? "12U wall cabinet with patch panels" : rackU >= 4 || (selG && selG.shape === "rack") || runs >= 10 ? "9U wall cabinet with patch panel" : runs >= 6 || swMulti ? "6U wall cabinet with patch panel" : "Compact comms shelf / small cabinet";
 
       // Time
-      var hours = 1.5 + newRuns * CONFIG.hoursPerRun[S.routes] + totalAPs * 0.3 + newCams * 0.4 + onvifCams * 0.3 + 1.5;
+      var hours = 1.5 + newRuns * CONFIG.hoursPerRun[S.routes] + totalAPs * 0.3 + newCams * 0.4 + onvifCams * 0.3 + (selNVR ? 0.5 : 0) + 1.5;
       var days = Math.max(0.5, Math.ceil(hours / 8 * 2) / 2);
 
       // Kit list
@@ -330,19 +430,25 @@
       function add(group, qn, item, why) { if (qn > 0) kit.push({ group: group, q: qn, item: item, why: why || "" }); }
       if (selG) add("Network", 1, selG.full, selG.blurb + (selG === recG ? "" : " (chosen manually)"));
       if (!selG && (totalAPs || selSW || cams)) add("Network", 1, CONFIG.controller, "Customer keeps their router; UniFi kit still needs a controller");
-      if (selSW) add("Network", swCount, selSW.full + (/switch/i.test(selSW.full) ? "" : " switch"), selSW.poe ? "Powers " + poeNeed + " PoE device" + (poeNeed === 1 ? "" : "s") + " (~" + Math.round(poeWatts) + " W), " + portNeed + " ports needed" : portNeed + " ports needed, no PoE output");
+      if (selSW) add("Network", swCount, selSW.full + (/switch/i.test(selSW.full) ? "" : " switch"),
+        (swMulti ? swCount + " needed, linked together. " : "") +
+        (selSW.poe ? "Powers " + poeNeed + " PoE device" + (poeNeed === 1 ? "" : "s") + " (~" + Math.round(poeWatts) + " W of " + selSW.budget * swCount + " W), " + portNeed + " ports needed" : portNeed + " ports needed, no PoE output"));
       add("Network", injectors, CONFIG.injector, "Powers each access point / camera without a PoE switch");
       add("Network", S.roomSwQty, roomSw.full, "Extra wired ports behind a TV or on a desk");
       add("Network", 1, cabinet, "Tidy home for the network kit");
       if (biz || cams) add("Network", 1, CONFIG.ups, "Keeps Wi-Fi and cameras up through power cuts");
-      if (selAP) add("Wi-Fi", indoor, selAP.full, "Indoor " + (/U6/.test(selAP.name) ? "Wi-Fi 6" : "Wi-Fi 7") + ", " + selAP.mount + "-mounted");
-      add("Wi-Fi", outdoorAPs, CONFIG.apOutdoor.full, "Weatherproof, for " + outdoorAreas.map(function (o) { return OUT_LABEL[o]; }).join(", "));
+      if (selAP) add("Wi-Fi", indoor, selAP.full, "Indoor " + (/U6/.test(selAP.name) ? "Wi-Fi 6" : "Wi-Fi 7") + ", " + selAP.mount + "-mounted" + (indoor !== indoorSugg ? " (" + (indoor > indoorSugg ? "+" : "") + (indoor - indoorSugg) + " vs suggested)" : ""));
+      add("Wi-Fi", outdoorAPs, CONFIG.apOutdoor.full, "Weatherproof" + (outdoorAreas.length ? ", for " + outdoorAreas.map(function (o) { return OUT_LABEL[o]; }).join(", ") : ", outside"));
       add("Wi-Fi", outbuildAPs, CONFIG.apOutbuilding.full, "Inside the garage / garden office");
-      add("Wi-Fi", outbuildAPs, CONFIG.bridge, "Only if a cable can't be run to the outbuilding");
-      add("CCTV", newCams, "UniFi Protect camera", replaced ? S.camsNew + " new + " + replaced + " replacing old analogue cameras" : "Model and lens chosen at survey");
+      add("Wi-Fi", outbuildAPs ? 1 : 0, CONFIG.bridge, "Only if a cable can't be run to the outbuilding");
+      add("CCTV", newCams, "UniFi Protect camera (G5 range)", replaced ? S.camsNew + " new + " + replaced + " replacing old analogue cameras" : "Model and lens chosen at survey");
       add("CCTV", onvifCams, "Customer's own camera, added to UniFi Protect (ONVIF)", S.camCabled === "yes" ? "Reuses existing cable, no licence fee" : "New cable to the cabinet, no licence fee");
       add("CCTV", aiPorts, "UniFi AI Port", "Adds smart detections to customer's own cameras");
-      if (cams) add("CCTV", 1, needNVR ? CONFIG.cctv.nvr + " with " + fmtTB(driveTB) + " storage" : fmtTB(driveTB) + " " + (selG.media || "recording drive"), "About " + S.retention + " days of 24/7 recording");
+      if (onGateway) add("CCTV", selG.bays || 1, fmtTB(driveTB) + " " + (selG.media || "recording drive"), "Fits in the " + selG.name + (selG.bays > 1 ? ", mirrored so a failed drive loses nothing" : "") + ". About " + S.retention + " days of 24/7 recording");
+      if (selNVR) {
+        add("CCTV", 1, selNVR.full, "Records " + cams + " camera" + (cams > 1 ? "s" : "") + " (up to " + selNVR.maxCams + " at 2K). " + selNVR.blurb);
+        if (nvrDrives) add("CCTV", nvrDrives.count, nvrDrives.size + " TB surveillance hard drive", "About " + S.retention + " days of 24/7 recording" + (nvrDrives.protected ? ", one drive's worth of protection if a drive fails" : ""));
+      }
       add("Cabling", apRuns, "Cat6 runs for Wi-Fi & wired points", "Terminated, tested, labelled both ends");
       add("Cabling", camRuns, "Cat6 runs for cameras", "External-grade cable where it runs outside");
 
@@ -354,10 +460,12 @@
       if (phones) nets.push("Phones");
 
       var notes = [];
-      if (!selG) notes.push(["", "The customer keeps their existing router. UniFi access points and switches still need a UniFi controller, so a Cloud Key is listed (or the UniFi Network app can run on a computer that stays on)." + (cams ? " Cameras record on a separate UniFi recorder." : "")]);
+      if (!selG) notes.push(["", "The customer keeps their existing router. UniFi access points and switches still need a UniFi controller, so a Cloud Key is listed (or the UniFi Network app can run on a computer that stays on)."]);
       if (builtIn) notes.push(["", "The " + selG.name + " has Wi-Fi built in, so it covers one area itself (" + builtInFloor.toLowerCase() + ", where the internet comes in)."]);
       if (noAP) notes.push(["", "No indoor access points are planned" + (builtIn ? " beyond the gateway's built-in Wi-Fi" : "") + "."]);
+      if (apChanged) notes.push(["", "Access point numbers have been changed from our suggestion (" + (indoorSugg + outdoorSugg + outbuildSugg) + " suggested, " + totalAPs + " planned). Power, switch and cabling are worked out on the planned number."]);
       if (injectors) notes.push(["warn", "Without a PoE switch, each access point" + (cams ? " and camera" : "") + " needs its own PoE injector and a power socket near the network kit."]);
+      if (selNVR && selNVR.id === "unvr-instant") notes.push(["", "The UNVR Instant has PoE ports of its own, so some cameras can plug straight into it. We'll confirm at the survey whether that lets us use a smaller switch."]);
       if (onvifCams) notes.push(["", "Existing network cameras are added to UniFi Protect using ONVIF, the open standard most IP cameras support, with no licence fee. They record 24/7 and show live in the Protect app. Smart detections, PTZ control and two-way audio depend on the camera and may not carry across. " + (aiPorts ? "The AI Port adds UniFi's people and vehicle detection." : "A UniFi AI Port can add people and vehicle detection if wanted.")]);
       if (replaced) notes.push(["warn", "Analogue (coax) cameras can't connect to UniFi Protect, so the plan swaps them for UniFi cameras. If the customer wants to keep them, they stay on their own DVR, separate from Protect."]);
       if (cctv && S.camKind === "unsure" && S.camsExisting) notes.push(["warn", "We'll check at the survey whether the existing cameras are IP (ONVIF) or analogue. That decides whether they can be kept."]);
@@ -381,12 +489,15 @@
       if (biz) checks.push("Opening hours / best times to work, and building or landlord permissions");
       if (S.walls === "solid" || S.type === "warehouse") checks.push("Wi-Fi signal test on site to confirm access point spacing");
 
-      return { recNoSW: recNoSW, noGW: noGW, noAP: noAP, noSW: noSW, builtIn: builtIn, builtInFloor: builtInFloor, injectors: injectors, roomSw: roomSw, swFits: swFits, biz: biz, totalArea: totalArea, floors: floors, devices: Math.round(devices), indoor: indoor, outdoorAPs: outdoorAPs, outdoorAreas: outdoorAreas,
-        outbuildAPs: outbuildAPs, totalAPs: totalAPs, recAP: recAP, selAP: selAP, apCountFor: apCountFor, cams: cams, newCams: newCams, onvifCams: onvifCams,
-        replaced: replaced, aiPorts: aiPorts, storageTB: storageTB, driveTB: driveTB, needNVR: needNVR, loadUnits: loadUnits, recG: recG, selG: selG,
-        gwLoad: gwLoad, gwWarn: gwWarn, gwOk: gwOk, poeNeed: poeNeed, portNeed: portNeed, poeWatts: poeWatts, phones: phones, recSW: recSW, selSW: selSW,
-        swCount: swCount, swCountFor: swCountFor, apRuns: apRuns, camRuns: camRuns, newRuns: newRuns, hours: hours, days: days, kit: kit, nets: nets,
-        notes: notes, checks: checks };
+      return { recNoSW: recNoSW, noGW: noGW, noAP: noAP, noSW: noSW, builtIn: builtIn, builtInFloor: builtInFloor, injectors: injectors, roomSw: roomSw, biz: biz, totalArea: totalArea, floors: floors, devices: Math.round(devices),
+        indoor: indoor, indoorSugg: indoorSugg, outdoorAPs: outdoorAPs, outdoorSugg: outdoorSugg, outdoorAreas: outdoorAreas, outbuildAPs: outbuildAPs, outbuildSugg: outbuildSugg, apChanged: apChanged,
+        totalAPs: totalAPs, recAP: recAP, selAP: selAP, apCountFor: apCountFor, cams: cams, newCams: newCams, onvifCams: onvifCams,
+        replaced: replaced, aiPorts: aiPorts, storageTB: storageTB, driveTB: driveTB, needNVR: needNVR, onGateway: onGateway, selNVR: selNVR, recNVR: recNVR, nvrDrives: nvrDrives, drivesFor: drivesFor,
+        nvrFits: nvrFits, canRecord: canRecord, gwStore: gwStore, recRec: recRec, recReason: recReason, nvrWarn: nvrWarn, gwThatRecords: gwThatRecords,
+        loadUnits: loadUnits, loadOnGw: loadOnGw, loadOffGw: loadOffGw, recG: recG, selG: selG, speedOk: speedOk,
+        gwLoad: gwLoad, gwWarn: gwWarn, poeNeed: poeNeed, portNeed: portNeed, poeWatts: poeWatts, apWatts: apWatts, camWatts: camWatts, phones: phones, recSW: recSW, selSW: selSW,
+        swCount: swCount, swMulti: swMulti, swNote: swNote, swLimits: swLimits, swCountFor: swCountFor, apRuns: apRuns, camRuns: camRuns, newRuns: newRuns, hours: hours, days: days, kit: kit, nets: nets,
+        notes: notes, checks: checks, cabinet: cabinet };
     }
 
     /* ---------- icons / pickers ---------- */
@@ -399,9 +510,9 @@
         case "mini": for (i = 0; i < 5; i++) r += '<rect x="' + (33 + i * 5) + '" y="18" width="3.5" height="4" rx=".5" fill="#8e8e93"/>'; return '<svg viewBox="0 0 90 40" aria-hidden="true"><rect x="28" y="13" width="34" height="14" rx="3" ' + g + '/>' + r + "</svg>";
         case "tower": return '<svg viewBox="0 0 90 40" aria-hidden="true"><rect x="36" y="3" width="18" height="34" rx="6" ' + g + '/><circle cx="45" cy="14" r="1.6" fill="#8e8e93"/></svg>';
         case "desk": return '<svg viewBox="0 0 90 40" aria-hidden="true"><rect x="18" y="16" width="54" height="10" rx="3" ' + g + '/><rect x="40" y="19.5" width="10" height="3" rx="1.5" fill="#8e8e93"/></svg>';
-        case "disc-s": return '<svg viewBox="0 0 90 40" aria-hidden="true"><circle cx="45" cy="20" r="12" ' + g + '/><circle cx="45" cy="20" r="2" fill="#0a6cff" opacity=".5"/></svg>';
-        case "disc": return '<svg viewBox="0 0 90 40" aria-hidden="true"><rect x="30" y="5" width="30" height="30" rx="8" ' + g + '/><circle cx="45" cy="20" r="2.2" fill="#0a6cff" opacity=".5"/></svg>';
-        case "disc-l": return '<svg viewBox="0 0 90 40" aria-hidden="true"><rect x="27" y="2" width="36" height="36" rx="9" ' + g + '/><circle cx="45" cy="20" r="2.6" fill="#0a6cff" opacity=".5"/></svg>';
+        case "disc-s": return '<svg viewBox="0 0 90 40" aria-hidden="true"><circle cx="45" cy="20" r="12" ' + g + '/><circle cx="45" cy="20" r="2" fill="#0f62ea" opacity=".5"/></svg>';
+        case "disc": return '<svg viewBox="0 0 90 40" aria-hidden="true"><rect x="30" y="5" width="30" height="30" rx="8" ' + g + '/><circle cx="45" cy="20" r="2.2" fill="#0f62ea" opacity=".5"/></svg>';
+        case "disc-l": return '<svg viewBox="0 0 90 40" aria-hidden="true"><rect x="27" y="2" width="36" height="36" rx="9" ' + g + '/><circle cx="45" cy="20" r="2.6" fill="#0f62ea" opacity=".5"/></svg>';
         case "wall": return '<svg viewBox="0 0 90 40" aria-hidden="true"><rect x="35" y="2" width="20" height="36" rx="4" ' + g + '/><rect x="42" y="31" width="6" height="2" rx="1" fill="#8e8e93"/></svg>';
         case "plate": return '<svg viewBox="0 0 90 40" aria-hidden="true"><rect x="31" y="6" width="28" height="28" rx="3" ' + g + '/><rect x="38" y="24" width="6" height="4" rx=".5" fill="#8e8e93"/><rect x="46" y="24" width="6" height="4" rx=".5" fill="#8e8e93"/></svg>';
         case "switch-s": for (i = 0; i < 4; i++) r += '<rect x="' + (40 + i * 7) + '" y="18" width="5" height="4" rx=".5" fill="#8e8e93"/>'; return '<svg viewBox="0 0 90 40" aria-hidden="true"><rect x="18" y="14" width="54" height="12" rx="2" ' + g + '/>' + r + "</svg>";
@@ -409,13 +520,13 @@
       }
     }
     var NONE_LABEL = { gw: "Keep own router", ap: "No indoor APs", sw: "No switch" };
-    function picker(kind, list, selId, recId, label) {
-      list = [{ id: "none", name: "None", shape: "none" }].concat(list);
+    function picker(kind, list, selId, recId, label, noNone) {
+      if (!noNone) list = [{ id: "none", name: "None", shape: "none" }].concat(list);
       var base = label;
       label = function (it) { return it.id === "none" ? { text: NONE_LABEL[kind] } : base(it); };
       return '<div class="picks" data-picks="' + kind + '">' + list.map(function (it) {
         var l = label(it);
-        return '<button type="button" class="pc' + (l.bad ? " no" : "") + '" data-pick="' + kind + '" data-v="' + it.id + '" aria-pressed="' + (it.id === selId) + '">' +
+        return '<button type="button" class="pc' + (l.bad ? " no" : l.multi ? " multi" : "") + '" data-pick="' + kind + '" data-v="' + it.id + '" aria-pressed="' + (it.id === selId) + '">' +
           (it.id === recId ? '<span class="rec">Recommended</span>' : "") + icon(it.shape) + "<b>" + it.name + "</b><small>" + l.text + "</small></button>";
       }).join("") + "</div>";
     }
@@ -429,59 +540,83 @@
     function renderPlan() {
       var P = plan();
       var today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-      var n = 4;
+      var n = 5;
+      function result(label, html) { return '<div class="pick-result"><span>' + label + "</span><b>" + html + "</b></div>"; }
+      function qtyCtl(key, val, sugg) {
+        return '<div class="qty"><button type="button" data-apadj="' + esc(key) + '" data-s="' + sugg + '" data-val="' + val + '" data-d="-1" aria-label="One fewer"' + (val <= 0 ? " disabled" : "") + '>−</button><output>' + val + '</output><button type="button" data-apadj="' + esc(key) + '" data-s="' + sugg + '" data-val="' + val + '" data-d="1" aria-label="One more">+</button></div>' +
+          (val !== sugg ? '<small class="was">suggested ' + sugg + "</small>" : "");
+      }
       var h = '<div class="meta"><div><span>Project</span>' + esc(S.project || "—") + "</div><div><span>Customer</span>" + esc(S.customer || "—") + "</div><div><span>Postcode</span>" + esc(S.postcode || "—") + "</div><div><span>Prepared</span>" + today + "</div></div>" +
         '<div class="section"><div class="kpis k4" style="margin:0" data-r="planKpis">' +
         '<div class="kpi"><b>' + P.totalAPs + '</b><span>Access points</span></div><div class="kpi"><b>' + P.cams + '</b><span>Cameras</span></div>' +
         '<div class="kpi"><b>' + P.newRuns + '</b><span>New cable runs</span></div><div class="kpi"><b>' + fmtDays(P.days) + "</b><span>On site</span></div></div></div>";
 
-      h += '<div class="section" data-sec="gateway"><h3>1. Gateway</h3><p class="tag">The box that runs the whole network' + (P.cams ? " and records the cameras" : "") + ". Tap another to compare, or pick None to keep the customer's router.</p>" +
+      // 1. Gateway
+      h += '<div class="section" data-sec="gateway"><h3>1. Gateway</h3><p class="tag">The box that runs the whole network' + (P.cams ? (P.onGateway ? " and records the cameras" : "") : "") + ". Tap another to compare, or pick None to keep the customer's router.</p>" +
         picker("gw", CONFIG.gateways, P.selG ? P.selG.id : "none", P.recG.id, function (g) {
-          var ld = Math.min(999, Math.round(P.loadUnits / g.cap * 100)) + "% load";
-          if (S.internet === "multigig" && !g.multigig) return { text: "Too slow for fibre", bad: true };
-          if (P.cams && (!g.protect || P.cams > g.maxCams)) return { text: ld + " + recorder" };
+          var ld = Math.min(999, Math.round((P.cams && P.canRecord(g) && !(S.rec && S.rec !== "gw") ? P.loadOnGw : P.loadOffGw) / g.cap * 100)) + "% load";
+          if (!P.speedOk(g)) return { text: "Too slow for your fibre", bad: true };
+          if (P.cams) return { text: ld + (P.canRecord(g) ? " · records" : " · needs NVR") };
           return { text: ld + (g.wifi ? " · Wi-Fi" : "") };
         }) +
-        (P.selG ? meter("Estimated load on " + P.selG.name, P.gwLoad, P.totalAPs + " APs · ~" + P.devices + " devices" + (P.cams ? " · " + P.cams + " cameras" : "") + (P.biz ? " · IPS/IDS on" : "") + '. Rough guide. Confirm on Ubiquiti\'s <a href="https://calculator.ui.com" target="_blank" rel="noopener">capacity calculator</a>.', "gw")
+        (P.selG ? result("Planned", "1 × " + esc(P.selG.full)) + meter("Estimated load on " + P.selG.name, P.gwLoad, P.totalAPs + " APs · ~" + P.devices + " devices" + (P.cams ? " · " + P.cams + " cameras" + (P.onGateway ? " recorded here" : " on a separate NVR") : "") + (P.biz ? " · IPS/IDS on" : "") + '. Rough guide. Confirm on Ubiquiti\'s <a href="https://calculator.ui.com" target="_blank" rel="noopener">capacity calculator</a>.', "gw")
           : '<div class="note" style="margin-top:8px">No UniFi gateway: the customer keeps their existing router.</div>') +
         P.gwWarn.map(function (w) { return '<div class="note warn" style="margin-top:8px">' + w + "</div>"; }).join("") + "</div>";
 
+      // 2. Access points
       var apName = P.selAP ? P.selAP.name : "—";
-      h += '<div class="section" data-sec="aps"><h3>2. Wi-Fi access points</h3><p class="tag">The units that give the Wi-Fi signal. Tap a model to see how many you\'d need.</p>' +
-        picker("ap", CONFIG.aps, P.selAP ? P.selAP.id : "none", P.recAP.id, function (a) { return { text: P.apCountFor(a) + " indoor · " + a.mount }; }) +
-        '<table style="margin-top:8px"><thead><tr><th>Area</th><th>Unit</th><th class="n">Qty</th></tr></thead><tbody>' +
-        (P.selAP ? P.floors.map(function (f) { return "<tr><td>" + f.name + ' <span class="tag">~' + Math.round(f.area) + ' m²</span></td><td class="m">' + apName + '</td><td class="n">' + f.aps + "</td></tr>"; }).join("")
+      h += '<div class="section" data-sec="aps"><h3>2. Wi-Fi access points</h3><p class="tag">The units that give the Wi-Fi signal. Pick a model, then use + and − to add or remove units in any area. Power and switches update as you go.</p>' +
+        picker("ap", CONFIG.aps, P.selAP ? P.selAP.id : "none", P.recAP.id, function (a) { return { text: P.apCountFor(a) + " indoor · " + a.watts + " W" }; }) +
+        '<table class="apt" style="margin-top:12px"><thead><tr><th>Area</th><th>Unit</th><th class="n">Qty</th></tr></thead><tbody>' +
+        (P.selAP ? P.floors.map(function (f) { return "<tr><td>" + f.name + ' <span class="tag">~' + Math.round(f.area) + ' m²</span></td><td class="m">' + apName + '</td><td class="n">' + qtyCtl(f.key, f.aps, f.sugg) + "</td></tr>"; }).join("")
           : '<tr><td>Indoors</td><td class="m">No access points</td><td class="n">0</td></tr>') +
-        (P.builtIn ? "<tr><td>" + P.builtInFloor + ' <span class="tag">built into gateway</span></td><td class="m">' + P.selG.name + '</td><td class="n">1</td></tr>' : "") +
-        (P.outdoorAPs ? "<tr><td>Outside (" + P.outdoorAreas.map(function (o) { return OUT_LABEL[o]; }).join(", ") + ')</td><td class="m">' + CONFIG.apOutdoor.name + '</td><td class="n">' + P.outdoorAPs + "</td></tr>" : "") +
-        (P.outbuildAPs ? '<tr><td>Outbuildings</td><td class="m">' + CONFIG.apOutbuilding.name + '</td><td class="n">' + P.outbuildAPs + "</td></tr>" : "") +
-        '</tbody></table><p class="tag" style="margin-top:8px">' + TYPE_LABEL[S.type] + ", ~" + Math.round(P.totalArea) + " m², around " + P.devices + " devices at busy times." + (P.selAP ? " " + P.selAP.blurb + "." : "") + "</p></div>";
+        (P.builtIn ? "<tr><td>" + P.builtInFloor + ' <span class="tag">built into gateway</span></td><td class="m">' + P.selG.name + '</td><td class="n"><span class="fixed">1</span></td></tr>' : "") +
+        "<tr><td>Outside" + (P.outdoorAreas.length ? ' <span class="tag">' + P.outdoorAreas.map(function (o) { return OUT_LABEL[o]; }).join(", ") + "</span>" : "") + '</td><td class="m">' + CONFIG.apOutdoor.name + '</td><td class="n">' + qtyCtl("outdoor", P.outdoorAPs, P.outdoorSugg) + "</td></tr>" +
+        (P.outbuildSugg || P.outbuildAPs ? '<tr><td>Outbuildings</td><td class="m">' + CONFIG.apOutbuilding.name + '</td><td class="n">' + qtyCtl("outbuild", P.outbuildAPs, P.outbuildSugg) + "</td></tr>" : "") +
+        '</tbody><tfoot><tr><td colspan="2">Total' + (P.selAP || P.outdoorAPs ? ' <span class="tag">~' + Math.round(P.apWatts) + " W of PoE power</span>" : "") + '</td><td class="n"><b>' + (P.totalAPs + P.builtIn) + "</b></td></tr></tfoot></table>" +
+        (P.apChanged ? '<div class="row-end"><button type="button" class="linkbtn" data-r="apReset">Reset to suggested (' + (P.indoorSugg + P.outdoorSugg + P.outbuildSugg) + ")</button></div>" : "") +
+        '<p class="tag" style="margin-top:8px">' + TYPE_LABEL[S.type] + ", ~" + Math.round(P.totalArea) + " m², around " + P.devices + " devices at busy times." + (P.selAP ? " " + P.selAP.blurb + "." : "") + "</p></div>";
 
+      // 3. Switch
       var sw = P.selSW, poeSw = sw && sw.poe > 0;
-      h += '<div class="section" data-sec="switch"><h3>3. Switch</h3><p class="tag">Connects the access points' + (P.cams ? " and cameras" : "") + " and wired points. A PoE switch also powers them over the same cable.</p>" +
+      h += '<div class="section" data-sec="switch"><h3>3. Switch</h3><p class="tag">Connects the access points' + (P.cams ? " and cameras" : "") + " and wired points. A PoE switch also powers them over the same cable. If one switch isn't enough, the plan works out how many you need.</p>" +
         picker("sw", CONFIG.switches, sw ? sw.id : "none", P.recSW ? P.recSW.id : "none", function (s) {
           var c = P.swCountFor(s);
-          if (!s.poe) return { text: s.ports + " ports · no PoE" + (c > 1 ? " · needs " + c : "") };
-          return c === 1 ? { text: s.poe + " PoE · " + s.budget + " W" } : { text: "needs " + c + " switches", bad: true };
+          if (!s.poe) return P.poeNeed ? { text: "No PoE · injectors", bad: true } : { text: s.ports + " ports" + (c > 1 ? " · " + c + " needed" : "") };
+          if (c === 1) return { text: s.poe + " PoE · " + s.budget + " W" };
+          var lim = P.swLimits(s);
+          return { text: c + " needed" + (lim.length ? " · " + lim[0] : ""), multi: true };
         }) +
-        (poeSw ? meter("PoE ports used" + (P.swCount > 1 ? " across " + P.swCount + " switches" : ""), P.poeNeed / (sw.poe * P.swCount),
-          P.totalAPs + " access points" + (P.cams ? " + " + P.cams + " cameras" : "") + (P.phones ? " + " + P.phones + " phones" : "") + (P.aiPorts ? " + " + P.aiPorts + " AI Port" + (P.aiPorts > 1 ? "s" : "") : "") + " · " + P.portNeed + " ports needed in total", "ports") +
-          meter("PoE power used", P.poeWatts / (sw.budget * P.swCount), "~" + Math.round(P.poeWatts) + " W at maximum draw, of " + sw.budget * P.swCount + " W available", "watts") : "") +
+        (sw ? result("Planned", (P.swMulti ? '<em class="count">' + P.swCount + " ×</em> " : "1 × ") + esc(sw.full)) : "") +
+        (P.swNote ? '<div class="note warn" style="margin-top:8px">' + P.swNote + "</div>" : "") +
+        (poeSw ? meter("PoE ports used" + (P.swMulti ? " across " + P.swCount + " switches" : ""), P.poeNeed / (sw.poe * P.swCount),
+          P.totalAPs + " access point" + (P.totalAPs === 1 ? "" : "s") + (P.cams ? " + " + P.cams + " camera" + (P.cams === 1 ? "" : "s") : "") + (P.phones ? " + " + P.phones + " phones" : "") + (P.aiPorts ? " + " + P.aiPorts + " AI Port" + (P.aiPorts > 1 ? "s" : "") : "") + " · " + P.portNeed + " ports needed in total", "ports") +
+          meter("PoE power used", P.poeWatts / (sw.budget * P.swCount), "~" + Math.round(P.poeWatts) + " W at maximum draw (APs ~" + Math.round(P.apWatts) + " W" + (P.cams ? ", cameras ~" + Math.round(P.camWatts) + " W" : "") + ") of " + sw.budget * P.swCount + " W available", "watts") : "") +
         (P.recNoSW && !sw ? '<div class="note" style="margin-top:8px">No switch needed: the ' + P.selG.name + "'s own ports cover the wired points.</div>" : "") +
         (P.injectors ? '<div class="note warn" style="margin-top:8px">' + (sw ? "This switch has no PoE output, so " : "No switch, so ") + P.injectors + " PoE injector" + (P.injectors > 1 ? "s are" : " is") + " added to power the access points" + (P.cams ? " and cameras" : "") + ".</div>" : "") +
-        '<div class="q" style="margin:16px 0 0"><div class="ql">Extra small switches <span class="hint">behind a TV, on a desk</span></div>' +
-        '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">' +
+        '<div class="inline-qs"><div class="q"><div class="ql">Wired points <span class="hint">TV, desk, console, printer</span></div>' + stepperInput("wired") + "</div>" +
+        '<div class="q"><div class="ql">Extra small switches <span class="hint">behind a TV, on a desk</span></div><div class="inline-row">' +
         chips("roomSw", CONFIG.roomSwitches.map(function (id) { var x = CONFIG.switches.filter(function (s) { return s.id === id; })[0]; return [id, x.name]; })) +
-        stepperInput("roomSwQty") + "</div></div></div>";
+        stepperInput("roomSwQty") + "</div></div></div></div>";
 
-
+      // 4. CCTV & recording
       if (P.cams) {
-        h += '<div class="section" data-sec="cctv"><h3>' + n + ". CCTV</h3><p class=\"tag\">Recorded on the " + (P.needNVR ? "separate UniFi recorder" : P.selG.name) + " and viewed in the UniFi Protect app.</p><table><tbody>" +
-          (P.newCams ? '<tr><td>New UniFi cameras</td><td class="m">' + (P.replaced ? "includes " + P.replaced + " replacing analogue" : "full smart detections") + '</td><td class="n">' + P.newCams + "</td></tr>" : "") +
+        var recList = [{ id: "gw", name: "On gateway", shape: P.selG ? P.selG.shape : "none" }].concat(CONFIG.nvrs);
+        h += '<div class="section" data-sec="cctv"><h3>4. CCTV &amp; recording</h3><p class="tag">Where the cameras record. Recording on the gateway saves a box; a separate NVR (recorder) takes more cameras and storage and lets the gateway be smaller.</p>' +
+          '<div class="nvr-q ' + (P.needNVR ? "yes" : "no") + '"><span>NVR needed?</span><b>' + P.recReason + "</b></div>" +
+          picker("rec", recList, P.onGateway ? "gw" : P.selNVR.id, P.recRec, function (r) {
+            if (r.id === "gw") return P.canRecord(P.selG) ? { text: fmtTB(P.driveTB) + " in " + P.selG.name } : { text: P.selG ? (P.selG.protect ? "Too small for this" : "Can't record") : "No gateway", bad: true };
+            return P.nvrFits(r) ? { text: "up to " + r.maxCams + " cams · " + r.bays + " bay" + (r.bays > 1 ? "s" : "") } : { text: "max " + r.maxCams + " cams", bad: true };
+          }, true) +
+          P.nvrWarn.map(function (w) { return '<div class="note warn" style="margin-top:8px">' + w + "</div>"; }).join("") +
+          '<table style="margin-top:12px"><tbody>' +
+          '<tr><td>New UniFi cameras</td><td class="m">' + (P.replaced ? "includes " + P.replaced + " replacing analogue" : "G5 range, smart detections") + '</td><td class="n">' + stepperInput("camsNew") + "</td></tr>" +
           (P.onvifCams ? '<tr><td>Customer\'s own cameras (ONVIF)</td><td class="m">24/7 recording, live view</td><td class="n">' + P.onvifCams + "</td></tr>" : "") +
           (P.aiPorts ? '<tr><td>AI Port</td><td class="m">smart detections for own cameras</td><td class="n">' + P.aiPorts + "</td></tr>" : "") +
-          '<tr><td>Recording storage</td><td class="m">' + S.retention + " days, ~" + fmtTB(P.storageTB) + ' needed</td><td class="n">' + fmtTB(P.driveTB) + "</td></tr></tbody></table></div>";
-        n++;
+          '<tr><td>Recording</td><td class="m">' + (P.onGateway ? "on the " + P.selG.name : "on the " + P.selNVR.name) + "</td><td class=\"n\">" + (P.onGateway ? "1" : "1") + "</td></tr>" +
+          '<tr><td>Storage</td><td class="m">' + S.retention + " days 24/7, ~" + fmtTB(P.storageTB) + ' needed</td><td class="n">' + (P.onGateway ? (P.selG.bays > 1 ? "2 × " : "") + fmtTB(P.driveTB) : P.nvrDrives ? P.nvrDrives.count + " × " + P.nvrDrives.size + " TB" : "—") + "</td></tr></tbody></table></div>";
+      } else {
+        h += '<div class="section" data-sec="cctv"><h3>4. CCTV</h3><p class="tag">No cameras in this plan.</p><button type="button" class="btn ghost small" data-r="addCctv">Add CCTV cameras</button></div>';
       }
 
       h += '<div class="section" data-sec="kit"><h3>' + n + '. Full kit list</h3><table><thead><tr><th>Item</th><th>Why</th><th class="n">Qty</th></tr></thead><tbody>' +
@@ -490,7 +625,7 @@
           return rows.length ? '<tr class="grp"><td colspan="3">' + g + "</td></tr>" + rows.map(function (k) { return "<tr><td>" + esc(k.item) + '</td><td class="m">' + esc(k.why) + '</td><td class="n">' + k.q + "</td></tr>"; }).join("") : "";
         }).join("") + "</tbody></table></div>";
 
-      h += '<div class="section"><h3>Networks we\'ll set up</h3><div class="chips" style="margin-top:8px">' + P.nets.map(function (x) { return '<span class="chip">' + x + "</span>"; }).join("") + "</div></div>";
+      h += '<div class="section"><h3>Networks we\'ll set up</h3><div class="chips" style="margin-top:8px">' + P.nets.map(function (x) { return '<span class="chip static">' + x + "</span>"; }).join("") + "</div></div>";
       if (P.notes.length) h += '<div class="section"><h3>Good to know</h3><div style="display:grid;gap:8px;margin-top:8px">' + P.notes.map(function (x) { return '<div class="note ' + x[0] + '">' + x[1] + "</div>"; }).join("") + "</div></div>";
       h += '<div class="section"><h3>What we\'ll check at the survey</h3><ul class="checks">' + P.checks.map(function (c) { return "<li>" + c + "</li>"; }).join("") + "</ul></div>";
       h += '<div class="section"><h3>What happens next</h3><div class="timeline"><div><b>1. Survey</b>We visit, confirm positions and cable routes.</div><div><b>2. Fixed quote</b>Itemised, based on this plan.</div><div><b>3. Install</b>About ' + fmtDays(P.days) + ' on site, tidy cabling.</div><div><b>4. Handover</b>Tested room by room, apps set up for you.</div></div></div>';
@@ -529,7 +664,8 @@
       var hasT = function () { return hasJ() && typeof window.jspdf.jsPDF.API.autoTable === "function"; };
       return (hasJ() ? Promise.resolve() : loadScript(CONFIG.pdfLibs.jspdf))
         .then(function () { return hasT() ? null : loadScript(CONFIG.pdfLibs.autotable); })
-        .then(function () { if (!hasT()) throw new Error("PDF library unavailable"); });
+        .then(function () { if (!hasT()) throw new Error("PDF library unavailable"); })
+        .then(ensureBrand);
     }
     function pdfFileName() {
       var d = new Date(), ds = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
@@ -537,153 +673,232 @@
       return CONFIG.company.replace(/\s+/g, "") + "-WiFi-Plan-" + p + "-" + ds + ".pdf";
     }
     function pdfSafe(t) { return String(t).replace(/m²/g, "sq m").replace(/²/g, "2").replace(/(\d)½/g, "$1.5").replace(/½/g, "0.5").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "..."); }
+    function loadImg(src) {
+      return new Promise(function (res) {
+        var im = new Image();
+        im.onload = function () {   // hand jsPDF a data URL: given a URL it would try to fetch it, which the page's CSP blocks
+          try { var c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d").drawImage(im, 0, 0);
+            res({ data: c.toDataURL("image/png"), w: im.naturalWidth, h: im.naturalHeight }); } catch (e) { res(null); }
+        };
+        im.onerror = function () { res(null); };
+        im.src = /^https?:|^\/|^data:/.test(src) ? src : SCRIPT_BASE + src;
+      });
+    }
+    var BRAND = null;
+    function ensureBrand() {
+      if (BRAND) return Promise.resolve(BRAND);
+      return Promise.all([loadImg(CONFIG.pdfBrand.logo), loadImg(CONFIG.pdfBrand.stamp)]).then(function (r) { BRAND = { logo: r[0], stamp: r[1] }; return BRAND; });
+    }
+    function planRef() {
+      var d = new Date(), ds = d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2);
+      var p = (S.project || S.postcode || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
+      return "CP-" + ds + (p ? "-" + p : "");
+    }
     function buildPDF() {
-      var P = plan();
+      var P = plan(), B = BRAND || {};
       var jsPDF = window.jspdf.jsPDF;
-      var doc = new jsPDF({ unit: "mm", format: "a4" });
-      var A = CONFIG.accentRGB, INK = [29, 29, 31], MUTED = [110, 110, 115], LINE = [227, 227, 232], BG = [245, 245, 247];
-      var M = 15, PW = 210, PH = 297, CW = PW - 2 * M, y = 0;
+      var doc = new jsPDF({ unit: "mm", format: "a4", compress: true });
+      var A = CONFIG.accentRGB, INK = [16, 20, 24], MUTED = [104, 104, 110], LINE = [222, 222, 228], BG = [246, 246, 248], GOLD = [176, 128, 36], AMBER = [168, 98, 0];
+      var M = 16, PW = 210, PH = 297, CW = PW - 2 * M, TOP = 26, y = 0;
       var today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+      var ref = planRef(), title = (S.project ? S.project + " " : "") + "Wi-Fi plan";
       var _text = doc.text.bind(doc), _split = doc.splitTextToSize.bind(doc);
       doc.text = function (t) { var a = Array.prototype.slice.call(arguments); a[0] = Array.isArray(t) ? t.map(pdfSafe) : pdfSafe(t); return _text.apply(null, a); };
       doc.splitTextToSize = function (t, w, o) { return _split(pdfSafe(t), w, o); };
+      doc.setProperties({ title: CONFIG.company + " - " + title, subject: "Wi-Fi & CCTV installation plan", author: CONFIG.company, creator: CONFIG.website });
       function color(c, kind) { doc[kind === "fill" ? "setFillColor" : kind === "draw" ? "setDrawColor" : "setTextColor"](c[0], c[1], c[2]); }
-      function ensure(hgt) { if (y + hgt > PH - 20) { doc.addPage(); y = 22; } }
-      function heading(t) { ensure(18); y += 8; doc.setFont("helvetica", "bold"); doc.setFontSize(12.5); color(INK); doc.text(t, M, y); y += 2.5; }
-      function para(t, size, col) {
-        doc.setFont("helvetica", "normal"); doc.setFontSize(size || 9.5); color(col || MUTED);
+      function img(im, x, yy, h) { if (!im) return 0; var w = h * im.w / im.h; try { doc.addImage(im.data, "PNG", x, yy, w, h, undefined, "FAST"); } catch (e) { return 0; } return w; }
+      function ensure(hgt) { if (y + hgt > PH - 24) { doc.addPage(); y = TOP; } }
+      function heading(num, t) {
+        ensure(20); y += 9;
+        doc.setFont("helvetica", "bold"); doc.setFontSize(12.5);
+        var x = M;
+        if (num) { color(A); doc.text(String(num), x, y); x += doc.getTextWidth(String(num)) + 2.5; }
+        color(INK); doc.text(t, x, y); y += 2.5;
+      }
+      function para(t, size, col, bold) {
+        doc.setFont("helvetica", bold ? "bold" : "normal"); doc.setFontSize(size || 9.5); color(col || MUTED);
         var lines = doc.splitTextToSize(t, CW); ensure(lines.length * 4.4 + 2); doc.text(lines, M, y + 4); y += lines.length * 4.4 + 2;
+      }
+      function callout(t, warn) {
+        doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+        var lines = doc.splitTextToSize(t, CW - 10), hh = lines.length * 4.1 + 5.5;
+        ensure(hh + 3);
+        if (warn) doc.setFillColor(255, 245, 228); else doc.setFillColor(Math.round(255 - (255 - A[0]) * 0.08), Math.round(255 - (255 - A[1]) * 0.08), Math.round(255 - (255 - A[2]) * 0.08));
+        doc.roundedRect(M, y + 1.5, CW, hh, 2, 2, "F");
+        color(warn ? AMBER : A, "fill"); doc.rect(M, y + 1.5, 1.1, hh, "F");
+        color(INK); doc.text(lines, M + 5, y + 6.6); y += hh + 2.5;
       }
       function table(head, body, opts) {
         var clean = function (row) { return row.map(function (c) { return typeof c === "string" ? pdfSafe(c) : (c && c.content ? Object.assign({}, c, { content: pdfSafe(c.content) }) : c); }); };
         body = body.map(clean); if (head) head = clean(head);
+        if (head && typeof head[2] === "string") head[2] = { content: head[2], styles: { halign: "right" } };
         doc.autoTable(Object.assign({
-          startY: y + 2, head: head ? [head] : undefined, body: body, margin: { left: M, right: M, top: 22, bottom: 20 }, theme: "plain",
-          styles: { font: "helvetica", fontSize: 9, cellPadding: { top: 2.2, bottom: 2.2, left: 2, right: 2 }, textColor: INK, lineColor: LINE, lineWidth: { bottom: 0.2 } },
-          headStyles: { fontStyle: "bold", fontSize: 7.5, textColor: MUTED },
-          columnStyles: { 1: { textColor: MUTED }, 2: { halign: "right", fontStyle: "bold", cellWidth: 16 } }
+          startY: y + 2.5, head: head ? [head] : undefined, body: body, margin: { left: M, right: M, top: TOP, bottom: 24 }, theme: "plain",
+          styles: { font: "helvetica", fontSize: 9, cellPadding: { top: 2.3, bottom: 2.3, left: 2, right: 2 }, textColor: INK, lineColor: LINE, lineWidth: { bottom: 0.2 }, valign: "middle" },
+          headStyles: { fontStyle: "bold", fontSize: 7.5, textColor: MUTED, lineWidth: { bottom: 0.35 }, lineColor: [200, 200, 206] },
+          columnStyles: { 0: { fontStyle: "bold", cellWidth: 62 }, 1: { textColor: MUTED }, 2: { halign: "right", fontStyle: "bold", cellWidth: 18 } }
         }, opts || {}));
         y = doc.lastAutoTable.finalY + 2;
       }
 
-      // Header
-      color(A, "fill"); doc.rect(0, 0, PW, 3, "F");
-      y = 16; doc.setFont("helvetica", "bold"); doc.setFontSize(15);
+      // ---- Letterhead (page 1) ----
+      var lw = img(B.logo, M, 11, 14);
+      var tx = M + (lw ? lw + 3.5 : 0);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(16);
       var co = CONFIG.company;
-      if (co.indexOf("City") === 0) { color(INK); doc.text("City", M, y); color(A); doc.text(co.slice(4), M + doc.getTextWidth("City"), y); }
-      else { color(INK); doc.text(co, M, y); }
-      doc.setFont("helvetica", "normal"); doc.setFontSize(9); color(MUTED); doc.text("Wi-Fi & CCTV installation plan", PW - M, y, { align: "right" });
-      y = 30; doc.setFont("helvetica", "bold"); doc.setFontSize(22); color(INK);
-      doc.text((S.project ? S.project + " " : "") + "Wi-Fi plan", M, y);
-      y += 8;
+      if (co.indexOf("City") === 0) { color(INK); doc.text("City", tx, 19.2); color(A); doc.text(co.slice(4), tx + doc.getTextWidth("City"), 19.2); }
+      else { color(INK); doc.text(co, tx, 19.2); }
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8); color(MUTED); doc.text("Wi-Fi, CCTV & network installation", tx, 24);
+      doc.setFontSize(8.5); color(INK);
+      doc.text(CONFIG.website, PW - M, 15, { align: "right" });
+      doc.text(CONFIG.email, PW - M, 19.5, { align: "right" });
+      color(MUTED); doc.text(CONFIG.areas, PW - M, 24, { align: "right" });
+      color(LINE, "draw"); doc.setLineWidth(0.25); doc.line(M, 30, PW - M, 30);
+      color(A, "fill"); doc.rect(M, 29.6, 26, 0.8, "F");
+
+      // Title block with the stamp on the right
+      var stampH = 40, stampW = B.stamp ? stampH * B.stamp.w / B.stamp.h : 0;
+      if (B.stamp) img(B.stamp, PW - M - stampW, 35, stampH);
+      var tw = CW - (stampW ? stampW + 8 : 0);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); color(A);
+      doc.setCharSpace(0.6); doc.text("INSTALLATION PLAN", M, 43); var lblW = doc.getTextWidth("INSTALLATION PLAN") + 0.6 * 17; doc.setCharSpace(0);
+      doc.setFont("helvetica", "normal"); color(MUTED); doc.text("Ref " + ref, M + lblW + 4, 43);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(23); color(INK);
+      var tl = doc.splitTextToSize(title, tw); doc.text(tl, M, 53); y = 53 + (tl.length - 1) * 9;
+      y += 9;
       var meta = [["Customer", S.customer || "—"], ["Postcode", S.postcode || "—"], ["Prepared", today], ["Property", TYPE_LABEL[S.type] + ", ~" + Math.round(P.totalArea) + " m²"]];
+      var mw = tw / 4;
       meta.forEach(function (m, i) {
-        var x = M + i * (CW / 4);
-        doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); color(MUTED); doc.text(m[0].toUpperCase(), x, y);
-        doc.setFontSize(10); color(INK); doc.text(doc.splitTextToSize(m[1], CW / 4 - 3)[0], x, y + 5);
+        var x = M + i * mw;
+        doc.setFont("helvetica", "bold"); doc.setFontSize(6.8); color(MUTED); doc.setCharSpace(0.3); doc.text(m[0].toUpperCase(), x, y); doc.setCharSpace(0);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); color(INK); doc.text(doc.splitTextToSize(m[1], mw - 3)[0], x, y + 5);
       });
-      y += 11;
-      var kpis = [[String(P.totalAPs), "Access points"], [String(P.cams), "Cameras"], [String(P.newRuns), "New cable runs"], [fmtDays(P.days), "On site"]];
+      y = Math.max(y + 12, B.stamp ? 35 + stampH + 4 : 0);
+      var kpis = [[String(P.totalAPs + P.builtIn), "Wi-Fi access points"], [String(P.cams), "Cameras"], [String(P.newRuns), "New cable runs"], [fmtDays(P.days), "On site"]];
       var bw = (CW - 9) / 4;
       kpis.forEach(function (k, i) {
-        var x = M + i * (bw + 3); color(BG, "fill"); doc.roundedRect(x, y, bw, 17, 2.5, 2.5, "F");
-        doc.setFont("helvetica", "bold"); doc.setFontSize(15); color(INK); doc.text(k[0], x + 4, y + 8.5);
-        doc.setFont("helvetica", "normal"); doc.setFontSize(8); color(MUTED); doc.text(k[1], x + 4, y + 13.5);
+        var x = M + i * (bw + 3); color(BG, "fill"); doc.roundedRect(x, y, bw, 18, 2.5, 2.5, "F");
+        doc.setFont("helvetica", "bold"); doc.setFontSize(16); color(INK); doc.text(k[0], x + 4.5, y + 9);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8); color(MUTED); doc.text(k[1], x + 4.5, y + 14.2);
       });
       y += 21;
 
       // 1. Gateway
-      heading("1. Gateway");
-      table(null, P.selG ? [[P.selG.full, P.selG.blurb, ""], ["Estimated load", Math.round(P.gwLoad * 100) + "% (rough guide, confirm on calculator.ui.com)", ""]] : [["None", "Customer keeps their existing router", ""]],
-        { columnStyles: { 0: { fontStyle: "bold", cellWidth: 62 }, 1: { textColor: MUTED }, 2: { cellWidth: 1 } } });
-      P.gwWarn.forEach(function (w) { para("! " + w, 9, [178, 106, 0]); });
+      heading(1, "Gateway");
+      table(null, P.selG ? [[P.selG.full, P.selG.blurb + (P.cams ? (P.onGateway ? ". Records the cameras." : ". Network only; cameras record on a separate NVR.") : ""), "1"],
+          [{ content: "Estimated load", styles: { fontStyle: "normal", textColor: MUTED } }, Math.round(P.gwLoad * 100) + "% (rough guide, confirmed with Ubiquiti's calculator)", ""]]
+        : [["None", "Customer keeps their existing router", ""]]);
+      P.gwWarn.forEach(function (w) { callout(w, true); });
 
       // 2. Access points
-      heading("2. Wi-Fi access points");
-      var apRows = P.selAP ? P.floors.map(function (f) { return [f.name + "  (~" + Math.round(f.area) + " m²)", P.selAP.full, String(f.aps)]; }) : [["Indoors", "No access points", "0"]];
-      if (P.builtIn) apRows.push([P.builtInFloor + "  (built into gateway)", P.selG.full, "1"]);
-      if (P.outdoorAPs) apRows.push(["Outside (" + P.outdoorAreas.map(function (o) { return OUT_LABEL[o]; }).join(", ") + ")", CONFIG.apOutdoor.full, String(P.outdoorAPs)]);
-      if (P.outbuildAPs) apRows.push(["Outbuildings", CONFIG.apOutbuilding.full, String(P.outbuildAPs)]);
-      table(["AREA", "UNIT", "QTY"], apRows);
+      heading(2, "Wi-Fi access points");
+      var apRows = P.selAP ? P.floors.map(function (f) { return [f.name + "  (~" + Math.round(f.area) + " m²)", P.selAP.full + (f.aps !== f.sugg ? "  (suggested " + f.sugg + ")" : ""), String(f.aps)]; }) : [["Indoors", "No access points", "0"]];
+      if (P.builtIn) apRows.push([P.builtInFloor, "Built into the " + P.selG.name, "1"]);
+      if (P.outdoorAPs || P.outdoorSugg) apRows.push(["Outside" + (P.outdoorAreas.length ? " (" + P.outdoorAreas.map(function (o) { return OUT_LABEL[o]; }).join(", ") + ")" : ""), CONFIG.apOutdoor.full + (P.outdoorAPs !== P.outdoorSugg ? "  (suggested " + P.outdoorSugg + ")" : ""), String(P.outdoorAPs)]);
+      if (P.outbuildAPs || P.outbuildSugg) apRows.push(["Outbuildings", CONFIG.apOutbuilding.full, String(P.outbuildAPs)]);
+      apRows.push([{ content: "Total", styles: { lineWidth: 0 } }, { content: "~" + Math.round(P.apWatts) + " W of PoE power at maximum draw", styles: { lineWidth: 0 } }, { content: String(P.totalAPs + P.builtIn), styles: { lineWidth: 0 } }]);
+      table(["AREA", "UNIT", "QTY"], apRows, { columnStyles: { 0: { fontStyle: "normal", cellWidth: 62 }, 1: { textColor: MUTED }, 2: { halign: "right", fontStyle: "bold", cellWidth: 18 } } });
       para("Around " + P.devices + " devices at busy times." + (P.selAP ? " " + P.selAP.blurb + "." : ""), 8.5);
 
       // 3. Switch
-      heading("3. Switch");
+      heading(3, "Switch & power");
       var swRows = [];
-      if (P.selSW) swRows.push([P.selSW.full, P.selSW.poe ? P.poeNeed + " PoE devices, " + P.portNeed + " ports needed, ~" + Math.round(P.poeWatts) + " W of " + P.selSW.budget * P.swCount + " W budget" : P.portNeed + " ports needed, no PoE output", String(P.swCount)]);
-      else swRows.push(["None", "No network switch", ""]);
+      if (P.selSW) swRows.push([P.selSW.full, P.selSW.poe ? P.poeNeed + " PoE devices, " + P.portNeed + " ports needed, ~" + Math.round(P.poeWatts) + " W of " + P.selSW.budget * P.swCount + " W" + (P.swMulti ? " (" + P.swCount + " switches, linked)" : "") : P.portNeed + " ports needed, no PoE output", String(P.swCount)]);
+      else swRows.push(["None", P.recNoSW ? "The gateway's own ports cover the wired points" : "No network switch", ""]);
       if (P.injectors) swRows.push([CONFIG.injector, "One per powered device", String(P.injectors)]);
       if (S.roomSwQty) swRows.push([P.roomSw.full, "Extra ports behind a TV or on a desk", String(S.roomSwQty)]);
-      table(null, swRows,
-        { columnStyles: { 0: { fontStyle: "bold", cellWidth: 62 }, 1: { textColor: MUTED }, 2: { halign: "right", fontStyle: "bold", cellWidth: 16 } } });
+      table(null, swRows);
+      if (P.swNote) callout(P.swNote, true);
 
       var n = 4;
       if (P.cams) {
-        heading(n + ". CCTV"); n++;
+        heading(n, "CCTV & recording"); n++;
+        callout("NVR needed? " + P.recReason, false);
         var cRows = [];
-        if (P.newCams) cRows.push(["New UniFi cameras", P.replaced ? "includes " + P.replaced + " replacing analogue" : "full smart detections", String(P.newCams)]);
+        if (P.newCams) cRows.push(["New UniFi cameras", P.replaced ? "includes " + P.replaced + " replacing analogue" : "G5 range, smart detections", String(P.newCams)]);
         if (P.onvifCams) cRows.push(["Customer's own cameras (ONVIF)", "24/7 recording, live view, no licence fee", String(P.onvifCams)]);
         if (P.aiPorts) cRows.push(["UniFi AI Port", "smart detections for own cameras", String(P.aiPorts)]);
-        cRows.push(["Recording storage", S.retention + " days 24/7, ~" + fmtTB(P.storageTB) + " needed, on " + (P.needNVR ? "separate recorder" : P.selG.name), fmtTB(P.driveTB)]);
-        table(null, cRows, { columnStyles: { 0: { cellWidth: 62 }, 1: { textColor: MUTED }, 2: { halign: "right", fontStyle: "bold", cellWidth: 16 } } });
+        if (P.onGateway) cRows.push(["Recording", "On the " + P.selG.name + ": " + P.gwStore(P.selG) + ", " + S.retention + " days 24/7 (~" + fmtTB(P.storageTB) + " needed)", String(P.selG.bays || 1)]);
+        else {
+          cRows.push([P.selNVR.full, "Separate recorder, up to " + P.selNVR.maxCams + " cameras at 2K", "1"]);
+          if (P.nvrDrives) cRows.push(["Recording drives", P.nvrDrives.count + " x " + P.nvrDrives.size + " TB, " + S.retention + " days 24/7 (~" + fmtTB(P.storageTB) + " needed)" + (P.nvrDrives.protected ? ", protected if a drive fails" : ""), String(P.nvrDrives.count)]);
+        }
+        table(null, cRows);
+        P.nvrWarn.forEach(function (w) { callout(w, true); });
       }
 
       // Kit list
-      heading(n + ". Full kit list");
+      heading(n, "Full kit list");
       var firstGroup = true;
       ["Network", "Wi-Fi", "CCTV", "Cabling"].forEach(function (g) {
         var rows = P.kit.filter(function (k) { return k.group === g; });
         if (!rows.length) return;
         ensure(16 + Math.min(rows.length, 3) * 7);
-        var head = [{ content: g.toUpperCase(), styles: { fillColor: BG, fontStyle: "bold", fontSize: 7.5, textColor: MUTED } }, { content: firstGroup ? "WHY" : "", styles: { fillColor: BG, fontSize: 7.5, textColor: MUTED } }, { content: firstGroup ? "QTY" : "", styles: { fillColor: BG, fontSize: 7.5, textColor: MUTED, halign: "right" } }];
-        table(head, rows.map(function (k) { return [k.item, k.why, String(k.q)]; }), { showHead: "everyPage", columnStyles: { 0: { cellWidth: 72 }, 1: { textColor: MUTED }, 2: { halign: "right", fontStyle: "bold", cellWidth: 14 } } });
-        y -= 2; firstGroup = false;
+        var hs = { fillColor: BG, fontStyle: "bold", fontSize: 7.5, textColor: MUTED, lineWidth: 0 };
+        var head = [{ content: g.toUpperCase(), styles: hs }, { content: firstGroup ? "WHY" : "", styles: hs }, { content: firstGroup ? "QTY" : "", styles: Object.assign({}, hs, { halign: "right" }) }];
+        table(head, rows.map(function (k) { return [k.item, k.why, String(k.q)]; }), { showHead: "everyPage", columnStyles: { 0: { cellWidth: 70, fontStyle: "normal" }, 1: { textColor: MUTED }, 2: { halign: "right", fontStyle: "bold", cellWidth: 14 } } });
+        y += 1; firstGroup = false;
       });
-      y += 2;
 
-      heading("Networks we'll set up");
+      heading("", "Networks we'll set up");
       para(P.nets.join("   ·   "), 9.5, INK);
 
       if (P.notes.length) {
-        heading("Good to know");
-        P.notes.forEach(function (x) {
-          doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-          var lines = doc.splitTextToSize(x[1], CW - 8), hh = lines.length * 4.1 + 5;
-          ensure(hh + 2);
-          if (x[0] === "warn") doc.setFillColor(255, 244, 224); else doc.setFillColor(Math.round(255 - (255 - A[0]) * 0.09), Math.round(255 - (255 - A[1]) * 0.09), Math.round(255 - (255 - A[2]) * 0.09));
-          doc.roundedRect(M, y + 1.5, CW, hh, 2, 2, "F"); color(INK); doc.text(lines, M + 4, y + 6.3); y += hh + 2.5;
-        });
+        heading("", "Good to know");
+        P.notes.forEach(function (x) { callout(x[1], x[0] === "warn"); });
       }
 
-      heading("What we'll check at the survey");
+      heading("", "What we'll check at the survey");
       doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
       P.checks.forEach(function (c) {
         var lines = doc.splitTextToSize(c, CW - 8); ensure(lines.length * 4.4 + 2);
-        color([199, 199, 204], "draw"); doc.setLineWidth(0.35); doc.roundedRect(M, y + 1.3, 3.6, 3.6, 0.8, 0.8, "S");
+        color([190, 190, 196], "draw"); doc.setLineWidth(0.35); doc.roundedRect(M, y + 1.3, 3.6, 3.6, 0.8, 0.8, "S");
         color(INK); doc.text(lines, M + 6.5, y + 4.4); y += lines.length * 4.4 + 1.8;
       });
 
-      heading("What happens next");
-      ensure(26);
+      heading("", "What happens next");
+      ensure(28);
       var steps = [["1. Survey", "We visit, confirm positions and cable routes."], ["2. Fixed quote", "Itemised, based on this plan."], ["3. Install", "About " + fmtDays(P.days) + " on site, tidy cabling."], ["4. Handover", "Tested room by room, apps set up for you."]];
       steps.forEach(function (s, i) {
         var x = M + i * (bw + 3); color(BG, "fill"); doc.roundedRect(x, y + 2, bw, 22, 2.5, 2.5, "F");
-        doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); color(INK); doc.text(s[0], x + 3.5, y + 7.5);
-        doc.setFont("helvetica", "normal"); doc.setFontSize(8); color(MUTED); doc.text(doc.splitTextToSize(s[1], bw - 7), x + 3.5, y + 12);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); color(INK); doc.text(s[0], x + 4, y + 8);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8); color(MUTED); doc.text(doc.splitTextToSize(s[1], bw - 8), x + 4, y + 12.5);
       });
       y += 27;
 
-      if (S.notes) { heading("Customer notes"); para(S.notes, 9.5, INK); }
+      if (S.notes) { heading("", "Customer notes"); para(S.notes, 9.5, INK); }
 
-      // Footer on every page
+      // Sign-off with the stamp
+      ensure(46); y += 6;
+      var boxH = 38;
+      color(LINE, "draw"); doc.setLineWidth(0.3); doc.roundedRect(M, y, CW, boxH, 3, 3, "S");
+      var sH = 30, sW = B.stamp ? sH * B.stamp.w / B.stamp.h : 0;
+      if (B.stamp) img(B.stamp, PW - M - sW - 6, y + 4, sH);
+      var bx = M + 6, bwid = CW - 12 - (sW ? sW + 8 : 0);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(11); color(INK); doc.text("Planned by " + CONFIG.company, bx, y + 9);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); color(MUTED); doc.text("Ref " + ref + "   ·   " + today, bx, y + 14);
+      doc.setFontSize(9); color(INK);
+      var sl = doc.splitTextToSize("This plan is an estimate based on the answers given. We confirm positions, cable routes and equipment at a free site survey, then send you a fixed, itemised quote.", bwid);
+      doc.text(sl, bx, y + 20.5);
+      doc.setFont("helvetica", "bold"); color(A); doc.text("Book your survey: " + CONFIG.website + "  ·  " + CONFIG.email, bx, y + 21.5 + sl.length * 4.2);
+      y += boxH + 4;
+
+      // Running header (pages 2+) and footer (all pages)
       var pages = doc.getNumberOfPages();
       for (var p = 1; p <= pages; p++) {
         doc.setPage(p);
-        color(LINE, "draw"); doc.setLineWidth(0.2); doc.line(M, PH - 14, PW - M, PH - 14);
-        doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); color(MUTED);
-        doc.text(CONFIG.website + "  ·  Planning estimate. Final equipment, positions and price are confirmed after a site survey.", M, PH - 9);
-        doc.text("Page " + p + " of " + pages, PW - M, PH - 9, { align: "right" });
-        if (p > 1) { doc.setFont("helvetica", "bold"); doc.setFontSize(9); color(INK); doc.text((S.project ? S.project + " " : "") + "Wi-Fi plan", M, 13); color(A, "fill"); doc.rect(0, 0, PW, 3, "F"); }
+        if (p > 1) {
+          var hw = img(B.logo, M, 9, 7.5);
+          doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); color(INK); doc.text(co, M + (hw ? hw + 2.5 : 0), 14.6);
+          doc.setFont("helvetica", "normal"); doc.setFontSize(8); color(MUTED); doc.text(title + "   ·   Ref " + ref, PW - M, 14.6, { align: "right" });
+          color(LINE, "draw"); doc.setLineWidth(0.25); doc.line(M, 19, PW - M, 19);
+        }
+        color(LINE, "draw"); doc.setLineWidth(0.25); doc.line(M, PH - 17, PW - M, PH - 17);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); color(INK); doc.text(co, M, PH - 12);
+        doc.setFont("helvetica", "normal"); color(MUTED); doc.text(CONFIG.website + "  ·  " + CONFIG.email + "  ·  " + CONFIG.areas, M + doc.getTextWidth(co) + 3, PH - 12);
+        doc.setFontSize(6.8); doc.text("Planning estimate. Final equipment, positions and price are confirmed after a site survey.", M, PH - 8);
+        doc.setFontSize(7.5); doc.text("Page " + p + " of " + pages, PW - M, PH - 12, { align: "right" });
       }
       return doc;
     }
@@ -775,7 +990,13 @@
           .then(function () { toast("Plan copied"); }, function () { toast("Couldn't copy here"); });
         return;
       }
-      if (t.closest('[data-r="editBtn"]')) { step = 0; S.gw = S.ap = S.sw = null; render(); scrollTop(); return; }
+      if ((el = t.closest("[data-apadj]"))) {
+        var ak = el.dataset.apadj, nv = Math.max(LIMITS.apQty[0], Math.min(LIMITS.apQty[1], +el.dataset.val + (+el.dataset.d)));
+        S.apAdj = Object.assign({}, S.apAdj); S.apAdj[ak] = nv - (+el.dataset.s); rerenderKeepScroll(); return;
+      }
+      if (t.closest('[data-r="apReset"]')) { S.apAdj = {}; rerenderKeepScroll(); return; }
+      if (t.closest('[data-r="addCctv"]')) { S.uses = S.uses.concat(["cctv"]); if (!S.camsNew && !S.camsExisting) S.camsNew = 4; rerenderKeepScroll(); return; }
+      if (t.closest('[data-r="editBtn"]')) { step = 0; S.gw = S.ap = S.sw = S.rec = null; render(); scrollTop(); return; }
     });
     root.addEventListener("input", function (e) {
       var el = e.target;

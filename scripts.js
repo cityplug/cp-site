@@ -167,3 +167,33 @@ if ("IntersectionObserver" in window) {
     item.classList.add("is-visible");
   });
 }
+
+// Pointer-follow light on cards and panels. Mouse/trackpad only; off when the user prefers reduced motion.
+(() => {
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  if (!finePointer.matches || reduceMotion.matches) return;
+
+  const surfaces = document.querySelectorAll(
+    ".service-card, .audience-card, .process-grid article, .feature-panel, .quote-form, .service-panel, .service-visual, .cta-strip"
+  );
+
+  surfaces.forEach((surface) => {
+    surface.classList.add("glow-surface");
+    let frame = 0;
+    let x = 0;
+    let y = 0;
+
+    surface.addEventListener("pointermove", (event) => {
+      const rect = surface.getBoundingClientRect();
+      x = event.clientX - rect.left;
+      y = event.clientY - rect.top;
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        surface.style.setProperty("--mx", `${x}px`);
+        surface.style.setProperty("--my", `${y}px`);
+        frame = 0;
+      });
+    });
+  });
+})();

@@ -5,13 +5,86 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Wi-Fi & CCTV Planner | CityPlug</title>
+<title>Wi-Fi &amp; CCTV Planner | CityPlug</title>
 <meta name="description" content="Plan a UniFi Wi-Fi and CCTV installation in two minutes: suggested kit, cabling and what to expect on the day.">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/assets/logo-black.svg">
+<link rel="stylesheet" href="/index.css">
 <link rel="stylesheet" href="wifi-planner.css">
-<style>html,body{margin:0;background:#f5f5f7}</style>
+<script defer src="/scripts.js"></script>
 </head>
-<body>
-<div data-cityplug-planner></div>
-<script src="wifi-planner.js"></script>
+<body class="service-page planner-page">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header" data-header>
+    <a href="/" class="brand" aria-label="CityPlug home">
+      <img src="/assets/logo-white.svg" width="34" height="28" alt="" />
+      <span>CityPlug</span>
+    </a>
+
+    <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-navigation" data-nav-toggle>
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav id="site-navigation" class="site-nav" aria-label="Primary navigation" data-nav>
+      <a href="/#services">Services</a>
+      <a href="/wifi-installation-south-london">Home Wi-Fi</a>
+      <a href="/business-wifi-network-cabling-london">Business</a>
+      <a href="/?service=wifi#contact" class="nav-cta">Get a free quote</a>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <section class="service-hero planner-hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <p class="eyebrow"><span class="nowrap">Wi-Fi</span> and CCTV planner</p>
+        <h1>Plan your <span class="nowrap">Wi-Fi</span> installation.</h1>
+        <p class="hero-copy">Answer a few quick questions about the property and you'll get a suggested setup (router, access points, switch, cabling and CCTV) and what to expect on the day. It takes about two minutes.</p>
+      </div>
+    </section>
+
+    <section class="planner-body">
+      <div data-cityplug-planner data-header="false"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <a href="/" class="footer-brand" aria-label="CityPlug home">
+          <img src="/assets/logo-black.svg" width="30" height="25" alt="" />
+          <span>CityPlug</span>
+        </a>
+      </div>
+
+      <div class="footer-main">
+        <div class="footer-about">
+          <p>CCTV, home Wi-Fi and business networks, installed across London, Kent and Essex.</p>
+        </div>
+
+        <nav class="footer-links" aria-label="Footer services">
+          <a href="/cctv-installation-london">CCTV installation London</a>
+          <a href="/wifi-installation-south-london">Wi-Fi installation South London</a>
+          <a href="/business-wifi-network-cabling-london">Business Wi-Fi installer London</a>
+          <a href="/business-wifi-network-cabling-london">Structured network cabling</a>
+          <a href="/privacy">Privacy notice</a>
+        </nav>
+
+        <div class="footer-areas">
+          <span>London</span>
+          <span>Kent</span>
+          <span>Essex</span>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; <span data-current-year></span> CityPlug. All rights reserved.</p>
+        <a href="mailto:info@cityplug.co.uk" class="footer-email">info@cityplug.co.uk</a>
+      </div>
+    </div>
+  </footer>
+  <script src="wifi-planner.js"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 /* CityPlug Wi-Fi & CCTV Planner — all styles are scoped under .cpwp so they can't clash with the site.
    Brand: change the --cpwp-* variables below (or override them from the site's own stylesheet). */
 .cpwp{
-  --cpwp-accent:#0a6cff; --cpwp-accent-ink:#fff; --cpwp-accent-soft:#e8f0ff;
+  --cpwp-accent:#0f62ea; --cpwp-accent-ink:#fff; --cpwp-accent-soft:#e8f0ff;
   --cpwp-bg:#f5f5f7; --cpwp-card:#fff; --cpwp-ink:#1d1d1f; --cpwp-muted:#6e6e73; --cpwp-line:#e3e3e8;
   --cpwp-ok:#1f9d55; --cpwp-amber:#e8a100; --cpwp-bad:#d93025; --cpwp-radius:16px;
   --cpwp-sticky-top:16px;   /* raise this if the site has a sticky header */
@@ -106,3 +106,51 @@
 .cpwp .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .cpwp .hidden{display:none!important}
 @media (prefers-reduced-motion:reduce){.cpwp *{transition:none!important}}
+
+/* ---- v2: wrapping product grid, quantities, recording, clearer results (Nov 2026) ---- */
+.cpwp{--cpwp-spring:cubic-bezier(.22,1,.36,1)}
+.cpwp .picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px;overflow:visible;padding:14px 0 4px;scroll-snap-type:none}
+.cpwp .pc{flex:none;min-width:0;padding:12px 8px 10px;border-radius:16px;transition:border-color .2s,box-shadow .25s var(--cpwp-spring),transform .12s ease-out;-webkit-tap-highlight-color:transparent}
+.cpwp .pc:hover{border-color:#c7c7cc}
+.cpwp .pc:active{transform:scale(.97)}
+.cpwp .pc small{line-height:1.3}
+.cpwp .pc.multi small{color:#a86200;font-weight:600}
+.cpwp .pc.no{background:#fbfbfc}
+.cpwp .pc.no svg{opacity:.55}
+.cpwp .pick-result{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--cpwp-accent-soft)}
+.cpwp .pick-result span{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--cpwp-accent)}
+.cpwp .pick-result b{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.cpwp .pick-result .count{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:2.4em;padding:1px 8px;margin-right:2px;border-radius:999px;background:var(--cpwp-accent);color:#fff;font-size:14px}
+.cpwp .nvr-q{display:flex;gap:12px;align-items:baseline;padding:14px 16px;border-radius:14px;margin:6px 0 2px;background:#e9f7ef}
+.cpwp .nvr-q.yes{background:#fff4e0}
+.cpwp .nvr-q span{flex:0 0 auto;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--cpwp-ok)}
+.cpwp .nvr-q.yes span{color:#a86200}
+.cpwp .nvr-q b{font-weight:500;font-size:15px}
+.cpwp td.n .qty,.cpwp td.n .stepper{vertical-align:middle}
+.cpwp .qty{display:inline-flex;align-items:center;border-radius:999px;background:var(--cpwp-bg);padding:2px}
+.cpwp .qty button{width:32px;height:32px;border:0;border-radius:999px;background:#fff;color:var(--cpwp-accent);font-size:18px;line-height:1;cursor:pointer;padding:0;box-shadow:0 1px 2px rgba(0,0,0,.08);transition:transform .1s ease-out}
+.cpwp .qty button:active{transform:scale(.92)}
+.cpwp .qty button[disabled]{color:#c7c7cc;cursor:default;box-shadow:none;background:transparent}
+.cpwp .qty output{min-width:30px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.cpwp .was{display:block;font-size:11px;font-weight:500;color:#a86200;margin-top:3px}
+.cpwp .fixed{display:inline-block;min-width:30px;text-align:center;margin-right:2px;color:var(--cpwp-muted)}
+.cpwp table td{vertical-align:middle}
+.cpwp tfoot td{border-bottom:0;font-weight:600;padding-top:12px}
+.cpwp .row-end{display:flex;justify-content:flex-end;margin-top:6px}
+.cpwp .linkbtn{border:0;background:none;color:var(--cpwp-accent);font-weight:600;font-size:14px;cursor:pointer;padding:6px 0}
+.cpwp .inline-qs{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:18px}
+.cpwp .inline-qs .q{margin:0}
+.cpwp .inline-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cpwp td .stepper button{width:34px;height:34px;font-size:18px}
+.cpwp td .stepper output{min-width:30px}
+.cpwp .chip.static{cursor:default}
+.cpwp .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;line-height:1;padding:0 20px;text-decoration:none;white-space:nowrap;vertical-align:middle;transition:transform .12s ease-out,background-color .2s}
+.cpwp .btn:active{transform:scale(.97)}
+.cpwp .btn.small{min-height:38px;font-size:14px;padding:0 16px}
+.cpwp a.btn.ghost,.cpwp a.btn.ghost:visited{color:var(--cpwp-ink)}
+.cpwp .actions{align-items:center;gap:10px;padding:16px;margin-top:24px;border-radius:18px;background:var(--cpwp-bg)}
+.cpwp .actions .btn{flex:1 1 auto}
+.cpwp .actions .btn.ghost{background:#fff;box-shadow:inset 0 0 0 1px var(--cpwp-line)}
+@media (max-width:560px){.cpwp .actions .btn{flex:1 1 calc(50% - 10px)}.cpwp .apt td:nth-child(2){display:none}}
+@media (prefers-reduced-motion:reduce){.cpwp .pc:active,.cpwp .btn:active,.cpwp .qty button:active{transform:none}}
+.cpwp .cpwp-grid.full{max-width:1000px;margin-left:auto;margin-right:auto}
