@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <!-- Stand-in only. Once the Cloudflare Worker route www.cityplug.co.uk/quote-planner* is live,
-       Cloudflare answers this address itself and this page is never served. -->
-  <meta http-equiv="refresh" content="0; url=/#contact">
-  <link rel="canonical" href="https://www.cityplug.co.uk/#contact">
-  <title>Get a free quote | CityPlug</title>
-  <script>window.location.replace("/#contact");</script>
+  <meta name="referrer" content="no-referrer">
+  <!-- Staff shortcut to the private CityPlug quote planner (Tailscale only; Shay's decision, 13 Nov 2026).
+       If the Cloudflare Worker route www.cityplug.co.uk/quote-planner* is deployed later, it answers first. -->
+  <meta http-equiv="refresh" content="0; url=https://cityplug-quotes.tail792bf.ts.net/">
+  <title>CityPlug quote planner</title>
+  <script>window.location.replace("https://cityplug-quotes.tail792bf.ts.net/");</script>
 </head>
 <body>
-  <p><a href="/#contact">Continue to the CityPlug quote form</a></p>
+  <p><a href="https://cityplug-quotes.tail792bf.ts.net/">Open the CityPlug quote planner</a> (needs Tailscale).</p>
 </body>
 </html>
