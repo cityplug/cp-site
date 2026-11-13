@@ -154,3 +154,50 @@
 @media (max-width:560px){.cpwp .actions .btn{flex:1 1 calc(50% - 10px)}.cpwp .apt td:nth-child(2){display:none}}
 @media (prefers-reduced-motion:reduce){.cpwp .pc:active,.cpwp .btn:active,.cpwp .qty button:active{transform:none}}
 .cpwp .cpwp-grid.full{max-width:1000px;margin-left:auto;margin-right:auto}
+/* Send this plan to CityPlug */
+.cpwp input[type=email],.cpwp input[type=tel]{width:100%;border:1px solid var(--cpwp-line);border-radius:12px;padding:11px 13px;font:inherit;font-size:15px;background:#fff;color:var(--cpwp-ink);margin:0}
+.cpwp .send-plan{border:1px solid var(--cpwp-line);border-radius:16px;padding:18px 18px 6px;background:#f7f9ff}
+.cpwp .send-plan .sub{margin:0 0 14px;color:var(--cpwp-muted);font-size:14px}
+.cpwp .send-plan .q{margin-bottom:14px}
+.cpwp .send-plan.sent{padding-bottom:12px}
+.cpwp .send-plan.sent p{margin:6px 0 0}
+.cpwp .send-plan .actions{margin-top:8px}
+.cpwp .consent{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;cursor:pointer}
+.cpwp .consent input{margin-top:3px;width:18px;height:18px;flex:none}
+.cpwp .hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+.cpwp .send-status{min-height:1.4em;font-size:14px;margin:10px 0 8px}
+.cpwp .send-status.bad{color:#b42318}
+/* ---- Layout stability: changing a value or a choice never moves the layout ---- */
+.cpwp .kpi{min-width:0;min-height:78px;display:flex;flex-direction:column;justify-content:space-between;gap:4px}
+.cpwp .kpi b{font-size:24px;line-height:1.1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cpwp .kpi span{line-height:1.25}
+.cpwp table{table-layout:fixed}
+.cpwp td{overflow-wrap:anywhere}
+.cpwp th.n,.cpwp td.n{width:76px}
+.cpwp .apt th:first-child{width:44%}
+.cpwp .apt th.n{width:136px}
+.cpwp [data-sec="cctv"] td.n{width:150px}
+.cpwp [data-sec="kit"] th:first-child{width:40%}
+.cpwp .was.same{visibility:hidden}
+.cpwp .pick-result b,.cpwp .meter .mh b,.cpwp .qty output,.cpwp .stepper output,.cpwp td.n{font-variant-numeric:tabular-nums}
+@media (max-width:560px){.cpwp .apt th:first-child{width:auto}.cpwp [data-sec="kit"] th:first-child{width:46%}}
+/* Side-panel kit quantities: centred badge, not the +/- pill */
+.cpwp .kit li{align-items:center}
+.cpwp .kit .qty{display:inline-flex;align-items:center;justify-content:center;flex:none;min-width:32px;height:28px;padding:0 9px;border-radius:999px;background:var(--cpwp-bg);font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;text-align:center}
+/* Send box: no grey band, natural-width button */
+.cpwp .send-plan .actions{background:transparent;padding:0;margin-top:12px;border-radius:0}
+.cpwp .send-plan .actions .btn{flex:0 0 auto;min-width:220px}
+@media (max-width:560px){.cpwp .send-plan .actions .btn{flex:1 1 100%}}
+.cpwp [data-sec="gwdisk"] .hint{font-weight:400;color:var(--cpwp-muted);font-size:13px;margin-left:4px}
+
+/* Footer "quote form": plain clickable text, no underline (goes to /quote-planner, answered by the Cloudflare Worker). */
+.footer-about .footer-quote-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.footer-about .footer-quote-link:hover,
+.footer-about .footer-quote-link:focus-visible {
+  color: var(--cyan);
+}

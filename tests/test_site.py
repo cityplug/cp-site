@@ -401,7 +401,7 @@ class SiteTests(unittest.TestCase):
         self.assertIn('name="robots" content="noindex', error_text)
         sitemap = (ROOT / "sitemap.xml").read_text(encoding="utf-8")
         self.assertIn("https://www.cityplug.co.uk/privacy", sitemap)
-        self.assertIn("<lastmod>2026-08-27</lastmod>", sitemap)
+        self.assertIn("<lastmod>2026-11-12</lastmod>", sitemap)
 
         document = parse("404.html")
         local_assets = []

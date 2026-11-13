@@ -14,10 +14,12 @@
 
   var DEFAULT_CONFIG = {
     company: "CityPlug",
-    website: "cityplug.co.uk",
+    website: "www.cityplug.co.uk",
     email: "info@cityplug.co.uk",
     areas: "London · Kent · Essex",
     quoteUrl: "https://www.cityplug.co.uk/#contact",
+    sendUrl: "",                      // relay for "Send this plan to CityPlug"; empty = button hidden. Set per page with data-send-url
+    privacyUrl: "/privacy",
     showHeader: true,                 // set false when embedding inside an existing page that has its own heading
     accentRGB: [15, 98, 234],        // PDF accent colour (match --cpwp-accent)
 
@@ -93,6 +95,7 @@
     ups: "UPS (battery backup) for network kit",
 
     pdfBrand: { logo: "brand/logo.png", stamp: "brand/stamp.png" },   // same-origin images for the PDF letterhead
+    pdfOpacity: { logo: 0.6, stamp: 0.8 },                              // logo 60%, CityPlug stamp 80% on the PDF
     pdfLibs: {
       jspdf:     ["vendor/jspdf.umd.min.js"],
       autotable: ["vendor/jspdf.plugin.autotable.min.js"]
@@ -110,6 +113,7 @@
     return out;
   }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function fmtDaysNum(d) { return d <= 0.5 ? "½" : (d % 1 ? Math.floor(d) + "½" : String(d)); }   // number only, for the fixed-size tiles
   function fmtDays(d) { return d <= 0.5 ? "½ day" : (d % 1 ? Math.floor(d) + "½ days" : d + " day" + (d > 1 ? "s" : "")); }
   function aAn(t) { return /^(8|11|18|80)\b|^[aeiou]/i.test(String(t)) ? "an " + t : "a " + t; }
   function fmtTB(tb) { return tb >= 1 ? (Math.round(tb * 10) / 10) + " TB" : Math.round(tb * 1000) + " GB"; }
@@ -141,8 +145,11 @@
       uses: ["streaming", "homeworking"],
       camsNew: 4, camsExisting: 0, camKind: "ip", camCabled: "yes", retention: 30, smart: "no",
       internet: "fttp", cabling: "none", routes: "mixed", mount: "ceiling", wired: 2, notes: "",
-      gw: null, ap: null, sw: null, rec: null, apAdj: {}, roomSw: "flexmini", roomSwQty: 0
+      gw: null, ap: null, sw: null, rec: null, apAdj: {}, roomSw: "flexmini", roomSwQty: 0,
+      sendEmail: "", sendPhone: "", sendConsent: false, sendHp: "", sendState: "",
+      gwDisk: "auto"                 // UCG Max / Fiber storage: "auto" = what the cameras need, else size in TB ("0" = no disk)
     };
+    var startedAt = Date.now();
     if (CONFIG.project) S.project = CONFIG.project;
     try { var qp = new URLSearchParams(location.search).get("project"); if (qp) S.project = qp; } catch (e) {}
     var step = 0;
@@ -162,7 +169,7 @@
       '<div class="card" data-r="main"><nav class="steps" data-r="steps" aria-label="Progress"></nav><div data-r="body"></div>' +
       '<div class="nav" data-r="nav"><button type="button" class="btn ghost" data-r="back">Back</button><button type="button" class="btn primary" data-r="next">Next</button></div></div>' +
       '<aside class="card" data-r="aside" aria-live="polite"><h3>Your plan so far</h3><div class="tag" data-r="asideProject">Live estimate</div>' +
-      '<div class="kpis"><div class="kpi"><b data-r="kAP">–</b><span>Access points</span></div><div class="kpi"><b data-r="kCam">–</b><span>Cameras</span></div><div class="kpi"><b data-r="kDays">–</b><span>On site</span></div></div>' +
+      '<div class="kpis"><div class="kpi"><b data-r="kAP">–</b><span>Access points</span></div><div class="kpi"><b data-r="kCam">–</b><span>Cameras</span></div><div class="kpi"><b data-r="kDays">–</b><span>Days on site</span></div></div>' +
       '<ul class="kit" data-r="asideKit"></ul></aside></div></div><div class="toast" data-r="toast" role="status"></div>';
     function R(name) { return q('[data-r="' + name + '"]'); }
 
@@ -185,9 +192,9 @@
 
     function renderProperty() {
       return '<div class="q"><div class="row2">' +
-        '<div><label for="cpwp-project">Project name <span class="hint">e.g. Scarborough</span></label><input type="text" id="cpwp-project" data-t="project" value="' + esc(S.project) + '"></div>' +
+        '<div><label for="cpwp-project">Project name <span class="hint">e.g. Home Wi-Fi upgrade</span></label><input type="text" id="cpwp-project" data-t="project" value="' + esc(S.project) + '"></div>' +
         '<div><label for="cpwp-postcode">Postcode</label><input type="text" id="cpwp-postcode" data-t="postcode" value="' + esc(S.postcode) + '" placeholder="SE1 7PB"></div></div></div>' +
-        '<div class="q"><label for="cpwp-customer">Customer name</label><input type="text" id="cpwp-customer" data-t="customer" value="' + esc(S.customer) + '"></div>' +
+        '<div class="q"><label for="cpwp-customer">Your name</label><input type="text" id="cpwp-customer" data-t="customer" value="' + esc(S.customer) + '"></div>' +
         '<div class="q"><div class="ql">Type of property</div>' + chips("type", [["house", "House"], ["flat", "Flat"], ["office", "Office"], ["shop", "Shop"], ["hospitality", "Café / bar / hotel"], ["warehouse", "Warehouse / unit"]]) + "</div>" +
         (isBiz()
           ? '<div class="q"><label for="cpwp-area">Approximate floor area <span class="hint">m², all floors together</span></label><input type="number" id="cpwp-area" data-n="area" min="20" step="10" value="' + S.area + '"></div>'
@@ -210,7 +217,7 @@
       var ex = S.camsExisting > 0;
       return '<div class="panel" data-r="cctvPanel"><h4>CCTV</h4>' +
         '<div class="q"><div class="ql">New UniFi cameras</div>' + stepperInput("camsNew") + "</div>" +
-        '<div class="q"><div class="ql">Existing cameras to keep <span class="hint">customer\'s own</span></div>' + stepperInput("camsExisting") + "</div>" +
+        '<div class="q"><div class="ql">Existing cameras to keep <span class="hint">your own</span></div>' + stepperInput("camsExisting") + "</div>" +
         (ex ? '<div class="q"><div class="ql">Existing cameras are</div>' + chips("camKind", [["ip", "Network / IP", "plug into a network cable"], ["analogue", "Analogue / coax", "old DVR system"], ["unsure", "Not sure"]]) + "</div>" +
           (S.camKind !== "analogue" ?
             '<div class="q"><div class="ql">Are they already cabled?</div>' + chips("camCabled", [["yes", "Yes, cable reaches the cabinet"], ["no", "No, need new cable"]]) + "</div>" +
@@ -326,7 +333,11 @@
       var needNVR = cams > 0 && !onGateway;
       var selNVR = needNVR ? (userNVR || recNVR) : null;
       var nvrDrives = selNVR ? drivesFor(selNVR.bays) : null;
-      var recRec = cams ? (canRecord(selG) ? "gw" : recNVR.id) : null;          // recommended recording option for the current gateway
+      var recRec = cams ? (canRecord(selG) ? "gw" : recNVR.id) : null;
+      // NVMe gateways (UCG Max / UCG Fiber) take an optional SSD: the customer can pick the size, or leave it on Auto.
+      var nvmeGw = !!selG && /NVMe/.test(selG.media || "");
+      var diskChoice = nvmeGw && S.gwDisk !== "auto" ? +S.gwDisk : null;          // TB; 0 = no disk; null = auto
+      var gwDiskDays = cams && diskChoice ? Math.floor(diskChoice * 1000 / CONFIG.cctv.driveHeadroom / (cams * CONFIG.cctv.gbPerCameraDay)) : 0;          // recommended recording option for the current gateway
       var recReason = "";
       if (cams) {
         if (onGateway) recReason = "No. The " + selG.name + " records all " + cams + " camera" + (cams > 1 ? "s" : "") + " itself, on " + gwStore(selG) + ".";
@@ -415,8 +426,11 @@
       var camRuns = newCams + (onvifCams && S.camCabled === "no" ? onvifCams : 0) + aiPorts;
       var reuse = S.cabling === "full" ? 0.5 : S.cabling === "some" ? 0.8 : 1;
       var apRuns = Math.round((indoor + S.wired + phones) * reuse) + outdoorAPs + outbuildAPs;
-      var newRuns = apRuns + camRuns;
-      var runs = indoor + outdoorAPs + outbuildAPs + S.wired + phones + camRuns;
+      // Default rules: a router (gateway) always gets 1 cable run, and a router + switch get 1 more run linking them.
+      // Both are terminated like any other run.
+      var routerRuns = selG ? 1 : 0, linkRuns = selG && selSW ? 1 : 0, coreRuns = routerRuns + linkRuns;
+      var newRuns = apRuns + camRuns + coreRuns;
+      var runs = indoor + outdoorAPs + outbuildAPs + S.wired + phones + camRuns + coreRuns;
       var rackU = (selG && selG.shape === "rack" ? 1 : 0) + (selNVR && selNVR.shape === "rack" ? (selNVR.bays > 4 ? 2 : 1) : 0) +
         (selSW && selSW.shape === "switch" ? swCount : 0) + Math.ceil(runs / 24) + 1;
       var cabinet = rackU >= 8 || runs > 40 ? "12U wall cabinet with patch panels" : rackU >= 4 || (selG && selG.shape === "rack") || runs >= 10 ? "9U wall cabinet with patch panel" : runs >= 6 || swMulti ? "6U wall cabinet with patch panel" : "Compact comms shelf / small cabinet";
@@ -429,7 +443,7 @@
       var kit = [];
       function add(group, qn, item, why) { if (qn > 0) kit.push({ group: group, q: qn, item: item, why: why || "" }); }
       if (selG) add("Network", 1, selG.full, selG.blurb + (selG === recG ? "" : " (chosen manually)"));
-      if (!selG && (totalAPs || selSW || cams)) add("Network", 1, CONFIG.controller, "Customer keeps their router; UniFi kit still needs a controller");
+      if (!selG && (totalAPs || selSW || cams)) add("Network", 1, CONFIG.controller, "You keep your router; UniFi kit still needs a controller");
       if (selSW) add("Network", swCount, selSW.full + (/switch/i.test(selSW.full) ? "" : " switch"),
         (swMulti ? swCount + " needed, linked together. " : "") +
         (selSW.poe ? "Powers " + poeNeed + " PoE device" + (poeNeed === 1 ? "" : "s") + " (~" + Math.round(poeWatts) + " W of " + selSW.budget * swCount + " W), " + portNeed + " ports needed" : portNeed + " ports needed, no PoE output"));
@@ -442,13 +456,17 @@
       add("Wi-Fi", outbuildAPs, CONFIG.apOutbuilding.full, "Inside the garage / garden office");
       add("Wi-Fi", outbuildAPs ? 1 : 0, CONFIG.bridge, "Only if a cable can't be run to the outbuilding");
       add("CCTV", newCams, "UniFi Protect camera (G5 range)", replaced ? S.camsNew + " new + " + replaced + " replacing old analogue cameras" : "Model and lens chosen at survey");
-      add("CCTV", onvifCams, "Customer's own camera, added to UniFi Protect (ONVIF)", S.camCabled === "yes" ? "Reuses existing cable, no licence fee" : "New cable to the cabinet, no licence fee");
-      add("CCTV", aiPorts, "UniFi AI Port", "Adds smart detections to customer's own cameras");
-      if (onGateway) add("CCTV", selG.bays || 1, fmtTB(driveTB) + " " + (selG.media || "recording drive"), "Fits in the " + selG.name + (selG.bays > 1 ? ", mirrored so a failed drive loses nothing" : "") + ". About " + S.retention + " days of 24/7 recording");
+      add("CCTV", onvifCams, "Your own camera, added to UniFi Protect (ONVIF)", S.camCabled === "yes" ? "Reuses existing cable, no licence fee" : "New cable to the cabinet, no licence fee");
+      add("CCTV", aiPorts, "UniFi AI Port", "Adds smart detections to your own cameras");
+      if (diskChoice != null) {
+        if (diskChoice > 0) add(onGateway ? "CCTV" : "Network", 1, fmtTB(diskChoice) + " NVMe SSD",
+          "Chosen size for the " + selG.name + (onGateway ? ". About " + Math.min(+S.retention, gwDiskDays) + " days of 24/7 recording" : ". For future CCTV recording or backups"));
+      } else if (onGateway) add("CCTV", selG.bays || 1, fmtTB(driveTB) + " " + (nvmeGw ? "NVMe SSD" : selG.media || "recording drive"), "Fits in the " + selG.name + (selG.bays > 1 ? ", mirrored so a failed drive loses nothing" : "") + ". About " + S.retention + " days of 24/7 recording");
       if (selNVR) {
         add("CCTV", 1, selNVR.full, "Records " + cams + " camera" + (cams > 1 ? "s" : "") + " (up to " + selNVR.maxCams + " at 2K). " + selNVR.blurb);
         if (nvrDrives) add("CCTV", nvrDrives.count, nvrDrives.size + " TB surveillance hard drive", "About " + S.retention + " days of 24/7 recording" + (nvrDrives.protected ? ", one drive's worth of protection if a drive fails" : ""));
       }
+      if (coreRuns) add("Cabling", coreRuns, "Cat6 runs for the router" + (linkRuns ? " and switch" : ""), "1 run to the " + selG.name + (linkRuns ? " + 1 linking it to the switch" : "") + ". Terminated, tested, labelled both ends");
       add("Cabling", apRuns, "Cat6 runs for Wi-Fi & wired points", "Terminated, tested, labelled both ends");
       add("Cabling", camRuns, "Cat6 runs for cameras", "External-grade cable where it runs outside");
 
@@ -460,14 +478,16 @@
       if (phones) nets.push("Phones");
 
       var notes = [];
-      if (!selG) notes.push(["", "The customer keeps their existing router. UniFi access points and switches still need a UniFi controller, so a Cloud Key is listed (or the UniFi Network app can run on a computer that stays on)."]);
+      if (diskChoice === 0 && onGateway) notes.push(["warn", "No disk is chosen for the " + selG.name + ", so it can't record the cameras. Pick a storage size, or choose a separate recorder in step 4."]);
+      else if (diskChoice != null && onGateway && diskChoice < driveTB) notes.push(["warn", "The " + fmtTB(diskChoice) + " drive holds about " + gwDiskDays + " days of 24/7 recording from " + cams + " camera" + (cams > 1 ? "s" : "") + ", less than the " + S.retention + " days chosen. " + fmtTB(driveTB) + " covers it."]);
+      if (!selG) notes.push(["", "You keep your existing router. UniFi access points and switches still need a UniFi controller, so a Cloud Key is listed (or the UniFi Network app can run on a computer that stays on)."]);
       if (builtIn) notes.push(["", "The " + selG.name + " has Wi-Fi built in, so it covers one area itself (" + builtInFloor.toLowerCase() + ", where the internet comes in)."]);
       if (noAP) notes.push(["", "No indoor access points are planned" + (builtIn ? " beyond the gateway's built-in Wi-Fi" : "") + "."]);
       if (apChanged) notes.push(["", "Access point numbers have been changed from our suggestion (" + (indoorSugg + outdoorSugg + outbuildSugg) + " suggested, " + totalAPs + " planned). Power, switch and cabling are worked out on the planned number."]);
       if (injectors) notes.push(["warn", "Without a PoE switch, each access point" + (cams ? " and camera" : "") + " needs its own PoE injector and a power socket near the network kit."]);
       if (selNVR && selNVR.id === "unvr-instant") notes.push(["", "The UNVR Instant has PoE ports of its own, so some cameras can plug straight into it. We'll confirm at the survey whether that lets us use a smaller switch."]);
       if (onvifCams) notes.push(["", "Existing network cameras are added to UniFi Protect using ONVIF, the open standard most IP cameras support, with no licence fee. They record 24/7 and show live in the Protect app. Smart detections, PTZ control and two-way audio depend on the camera and may not carry across. " + (aiPorts ? "The AI Port adds UniFi's people and vehicle detection." : "A UniFi AI Port can add people and vehicle detection if wanted.")]);
-      if (replaced) notes.push(["warn", "Analogue (coax) cameras can't connect to UniFi Protect, so the plan swaps them for UniFi cameras. If the customer wants to keep them, they stay on their own DVR, separate from Protect."]);
+      if (replaced) notes.push(["warn", "Analogue (coax) cameras can't connect to UniFi Protect, so the plan swaps them for UniFi cameras. If you'd rather keep them, they stay on their own DVR, separate from Protect."]);
       if (cctv && S.camKind === "unsure" && S.camsExisting) notes.push(["warn", "We'll check at the survey whether the existing cameras are IP (ONVIF) or analogue. That decides whether they can be kept."]);
       if (S.internet === "fttc") notes.push(["warn", "The internet line is part-fibre. New Wi-Fi gives great coverage, but it can't make the line itself faster. It's worth asking the provider about full fibre."]);
       if (S.internet === "wireless") notes.push(["", "5G and Starlink work well with UniFi. We'll place the receiver for best signal and run its cable to the cabinet."]);
@@ -493,10 +513,10 @@
         indoor: indoor, indoorSugg: indoorSugg, outdoorAPs: outdoorAPs, outdoorSugg: outdoorSugg, outdoorAreas: outdoorAreas, outbuildAPs: outbuildAPs, outbuildSugg: outbuildSugg, apChanged: apChanged,
         totalAPs: totalAPs, recAP: recAP, selAP: selAP, apCountFor: apCountFor, cams: cams, newCams: newCams, onvifCams: onvifCams,
         replaced: replaced, aiPorts: aiPorts, storageTB: storageTB, driveTB: driveTB, needNVR: needNVR, onGateway: onGateway, selNVR: selNVR, recNVR: recNVR, nvrDrives: nvrDrives, drivesFor: drivesFor,
-        nvrFits: nvrFits, canRecord: canRecord, gwStore: gwStore, recRec: recRec, recReason: recReason, nvrWarn: nvrWarn, gwThatRecords: gwThatRecords,
+        nvrFits: nvrFits, canRecord: canRecord, gwStore: gwStore, recRec: recRec, nvmeGw: nvmeGw, diskChoice: diskChoice, gwDiskDays: gwDiskDays, recReason: recReason, nvrWarn: nvrWarn, gwThatRecords: gwThatRecords,
         loadUnits: loadUnits, loadOnGw: loadOnGw, loadOffGw: loadOffGw, recG: recG, selG: selG, speedOk: speedOk,
         gwLoad: gwLoad, gwWarn: gwWarn, poeNeed: poeNeed, portNeed: portNeed, poeWatts: poeWatts, apWatts: apWatts, camWatts: camWatts, phones: phones, recSW: recSW, selSW: selSW,
-        swCount: swCount, swMulti: swMulti, swNote: swNote, swLimits: swLimits, swCountFor: swCountFor, apRuns: apRuns, camRuns: camRuns, newRuns: newRuns, hours: hours, days: days, kit: kit, nets: nets,
+        swCount: swCount, swMulti: swMulti, swNote: swNote, swLimits: swLimits, swCountFor: swCountFor, apRuns: apRuns, camRuns: camRuns, coreRuns: coreRuns, routerRuns: routerRuns, linkRuns: linkRuns, newRuns: newRuns, hours: hours, days: days, kit: kit, nets: nets,
         notes: notes, checks: checks, cabinet: cabinet };
     }
 
@@ -544,15 +564,15 @@
       function result(label, html) { return '<div class="pick-result"><span>' + label + "</span><b>" + html + "</b></div>"; }
       function qtyCtl(key, val, sugg) {
         return '<div class="qty"><button type="button" data-apadj="' + esc(key) + '" data-s="' + sugg + '" data-val="' + val + '" data-d="-1" aria-label="One fewer"' + (val <= 0 ? " disabled" : "") + '>−</button><output>' + val + '</output><button type="button" data-apadj="' + esc(key) + '" data-s="' + sugg + '" data-val="' + val + '" data-d="1" aria-label="One more">+</button></div>' +
-          (val !== sugg ? '<small class="was">suggested ' + sugg + "</small>" : "");
+          '<small class="was' + (val === sugg ? ' same" aria-hidden="true' : "") + '">suggested ' + sugg + "</small>";   // always rendered so the row height never changes
       }
-      var h = '<div class="meta"><div><span>Project</span>' + esc(S.project || "—") + "</div><div><span>Customer</span>" + esc(S.customer || "—") + "</div><div><span>Postcode</span>" + esc(S.postcode || "—") + "</div><div><span>Prepared</span>" + today + "</div></div>" +
+      var h = '<div class="meta"><div><span>Project</span>' + esc(S.project || "—") + "</div><div><span>Name</span>" + esc(S.customer || "—") + "</div><div><span>Postcode</span>" + esc(S.postcode || "—") + "</div><div><span>Prepared</span>" + today + "</div></div>" +
         '<div class="section"><div class="kpis k4" style="margin:0" data-r="planKpis">' +
         '<div class="kpi"><b>' + P.totalAPs + '</b><span>Access points</span></div><div class="kpi"><b>' + P.cams + '</b><span>Cameras</span></div>' +
-        '<div class="kpi"><b>' + P.newRuns + '</b><span>New cable runs</span></div><div class="kpi"><b>' + fmtDays(P.days) + "</b><span>On site</span></div></div></div>";
+        '<div class="kpi"><b>' + P.newRuns + '</b><span>New cable runs</span></div><div class="kpi"><b>' + fmtDaysNum(P.days) + "</b><span>Days on site</span></div></div></div>";
 
       // 1. Gateway
-      h += '<div class="section" data-sec="gateway"><h3>1. Gateway</h3><p class="tag">The box that runs the whole network' + (P.cams ? (P.onGateway ? " and records the cameras" : "") : "") + ". Tap another to compare, or pick None to keep the customer's router.</p>" +
+      h += '<div class="section" data-sec="gateway"><h3>1. Gateway</h3><p class="tag">The box that runs the whole network' + (P.cams ? (P.onGateway ? " and records the cameras" : "") : "") + ". Tap another to compare, or pick None to keep your current router.</p>" +
         picker("gw", CONFIG.gateways, P.selG ? P.selG.id : "none", P.recG.id, function (g) {
           var ld = Math.min(999, Math.round((P.cams && P.canRecord(g) && !(S.rec && S.rec !== "gw") ? P.loadOnGw : P.loadOffGw) / g.cap * 100)) + "% load";
           if (!P.speedOk(g)) return { text: "Too slow for your fibre", bad: true };
@@ -560,8 +580,16 @@
           return { text: ld + (g.wifi ? " · Wi-Fi" : "") };
         }) +
         (P.selG ? result("Planned", "1 × " + esc(P.selG.full)) + meter("Estimated load on " + P.selG.name, P.gwLoad, P.totalAPs + " APs · ~" + P.devices + " devices" + (P.cams ? " · " + P.cams + " cameras" + (P.onGateway ? " recorded here" : " on a separate NVR") : "") + (P.biz ? " · IPS/IDS on" : "") + '. Rough guide. Confirm on Ubiquiti\'s <a href="https://calculator.ui.com" target="_blank" rel="noopener">capacity calculator</a>.', "gw")
-          : '<div class="note" style="margin-top:8px">No UniFi gateway: the customer keeps their existing router.</div>') +
+          : '<div class="note" style="margin-top:8px">No UniFi gateway: you keep your existing router.</div>') +
         P.gwWarn.map(function (w) { return '<div class="note warn" style="margin-top:8px">' + w + "</div>"; }).join("") + "</div>";
+
+      // 1b. Storage for NVMe gateways
+      if (P.nvmeGw) {
+        var dOpts = [["auto", "Auto", P.onGateway ? fmtTB(P.driveTB) : P.cams ? "recording on NVR" : "none needed"], ["0", "No disk", "network only"]]
+          .concat([0.256, 0.512, 1, 2].filter(function (x) { return x <= P.selG.maxTB; }).map(function (x) { return [String(x), fmtTB(x), "NVMe SSD"]; }));
+        h += '<div class="section" data-sec="gwdisk" style="margin-top:16px"><div class="ql" style="font-weight:600;margin-bottom:8px">Storage for the ' + esc(P.selG.name) +
+          ' <span class="hint">' + (P.cams ? "for camera recordings" : "optional, for future CCTV or backups") + "</span></div>" + chips("gwDisk", dOpts) + "</div>";
+      }
 
       // 2. Access points
       var apName = P.selAP ? P.selAP.name : "—";
@@ -611,7 +639,7 @@
           P.nvrWarn.map(function (w) { return '<div class="note warn" style="margin-top:8px">' + w + "</div>"; }).join("") +
           '<table style="margin-top:12px"><tbody>' +
           '<tr><td>New UniFi cameras</td><td class="m">' + (P.replaced ? "includes " + P.replaced + " replacing analogue" : "G5 range, smart detections") + '</td><td class="n">' + stepperInput("camsNew") + "</td></tr>" +
-          (P.onvifCams ? '<tr><td>Customer\'s own cameras (ONVIF)</td><td class="m">24/7 recording, live view</td><td class="n">' + P.onvifCams + "</td></tr>" : "") +
+          (P.onvifCams ? '<tr><td>Your own cameras (ONVIF)</td><td class="m">24/7 recording, live view</td><td class="n">' + P.onvifCams + "</td></tr>" : "") +
           (P.aiPorts ? '<tr><td>AI Port</td><td class="m">smart detections for own cameras</td><td class="n">' + P.aiPorts + "</td></tr>" : "") +
           '<tr><td>Recording</td><td class="m">' + (P.onGateway ? "on the " + P.selG.name : "on the " + P.selNVR.name) + "</td><td class=\"n\">" + (P.onGateway ? "1" : "1") + "</td></tr>" +
           '<tr><td>Storage</td><td class="m">' + S.retention + " days 24/7, ~" + fmtTB(P.storageTB) + ' needed</td><td class="n">' + (P.onGateway ? (P.selG.bays > 1 ? "2 × " : "") + fmtTB(P.driveTB) : P.nvrDrives ? P.nvrDrives.count + " × " + P.nvrDrives.size + " TB" : "—") + "</td></tr></tbody></table></div>";
@@ -630,16 +658,81 @@
       h += '<div class="section"><h3>What we\'ll check at the survey</h3><ul class="checks">' + P.checks.map(function (c) { return "<li>" + c + "</li>"; }).join("") + "</ul></div>";
       h += '<div class="section"><h3>What happens next</h3><div class="timeline"><div><b>1. Survey</b>We visit, confirm positions and cable routes.</div><div><b>2. Fixed quote</b>Itemised, based on this plan.</div><div><b>3. Install</b>About ' + fmtDays(P.days) + ' on site, tidy cabling.</div><div><b>4. Handover</b>Tested room by room, apps set up for you.</div></div></div>';
       if (S.notes) h += '<div class="section"><h3>Your notes</h3><p style="margin:0;white-space:pre-wrap">' + esc(S.notes) + "</p></div>";
+      if (CONFIG.sendUrl) h += renderSend();
       h += '<div class="actions"><button type="button" class="btn primary" data-r="pdfBtn">Export PDF</button><button type="button" class="btn ghost" data-r="copyBtn">Copy plan</button>' +
-        '<a class="btn ghost" href="' + esc(CONFIG.quoteUrl) + '">Get a free quote</a><button type="button" class="btn ghost" data-r="editBtn">Edit answers</button></div>' +
+        '<button type="button" class="btn ghost" data-r="editBtn">Edit answers</button></div>' +
         '<p class="disclaimer">This is a planning estimate. Final equipment, positions and price are confirmed after a site survey.</p>';
       return h;
+    }
+
+    function renderSend() {
+      if (S.sendState === "sent") {
+        return '<div class="section send-plan sent" data-r="sendBox"><h3>Plan sent</h3><p>Thanks' + (S.customer ? ", " + esc(S.customer.split(" ")[0]) : "") +
+          '. CityPlug has your plan and will reply to ' + esc(S.sendEmail) + ' about a survey and a fixed quote.</p></div>';
+      }
+      var busy = S.sendState === "sending";
+      return '<div class="section send-plan" data-r="sendBox"><h3>Send this plan to CityPlug</h3>' +
+        '<p class="sub">We\'ll look over your plan and get back to you about a free survey and a fixed quote. Nothing is sent until you press Send.</p>' +
+        '<div class="row2"><div class="q"><label for="cpwp-s-name">Your name</label><input type="text" id="cpwp-s-name" data-t="customer" autocomplete="name" maxlength="80" value="' + esc(S.customer) + '"></div>' +
+        '<div class="q"><label for="cpwp-s-email">Email</label><input type="email" id="cpwp-s-email" data-t="sendEmail" autocomplete="email" maxlength="120" value="' + esc(S.sendEmail) + '"></div></div>' +
+        '<div class="row2"><div class="q"><label for="cpwp-s-phone">Phone <span class="hint">optional</span></label><input type="tel" id="cpwp-s-phone" data-t="sendPhone" autocomplete="tel" maxlength="20" value="' + esc(S.sendPhone) + '"></div>' +
+        '<div class="q"><label for="cpwp-s-postcode">Postcode</label><input type="text" id="cpwp-s-postcode" data-t="postcode" autocomplete="postal-code" maxlength="10" placeholder="SE1 7PB" value="' + esc(S.postcode) + '"></div></div>' +
+        '<div class="hp" aria-hidden="true"><label for="cpwp-s-web">Leave this empty</label><input type="text" id="cpwp-s-web" data-t="sendHp" tabindex="-1" autocomplete="off"></div>' +
+        '<label class="consent"><input type="checkbox" data-c="sendConsent"' + (S.sendConsent ? " checked" : "") + '> <span>I\'m happy for CityPlug to use these details and this plan to reply to me. See the <a href="' + esc(CONFIG.privacyUrl) + '">privacy notice</a>.</span></label>' +
+        '<div class="actions"><button type="button" class="btn primary" data-r="sendBtn"' + (busy ? " disabled" : "") + '>' + (busy ? "Sending…" : "Send this plan") + '</button></div>' +
+        '<p class="send-status" role="status" aria-live="polite" data-r="sendStatus"></p></div>';
+    }
+    function sendProblem() {
+      if (String(S.customer).trim().length < 2) return ["Please add your name.", "cpwp-s-name"];
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(S.sendEmail).trim())) return ["Please add a valid email address.", "cpwp-s-email"];
+      if (S.sendPhone && !/^[\d\s\-()+]{7,20}$/.test(String(S.sendPhone).trim())) return ["That phone number doesn't look right. It's optional, so you can leave it blank.", "cpwp-s-phone"];
+      if (!/^[A-Za-z]{1,2}\d[A-Za-z\d]?(\s*\d[A-Za-z]{2})?$/.test(String(S.postcode).trim())) return ["Please add your postcode (the first part is fine, e.g. SE1).", "cpwp-s-postcode"];
+      if (!S.sendConsent) return ["Please tick the box so we can reply to you.", null];
+      return null;
+    }
+    function sendPlan() {
+      var status = R("sendStatus"), problem = sendProblem();
+      if (problem) {
+        status.textContent = problem[0]; status.className = "send-status bad";
+        if (problem[1]) { var fld = root.querySelector("#" + problem[1]); if (fld) fld.focus(); }
+        return;
+      }
+      S.sendState = "sending"; rerenderKeepScroll();
+      var P = plan(), ref = planRef();
+      ensurePdfLibs().then(function () {
+        var blob = buildPDF().output("blob");
+        var fd = new FormData();
+        fd.append("name", String(S.customer).trim()); fd.append("email", String(S.sendEmail).trim());
+        fd.append("phone", String(S.sendPhone).trim()); fd.append("postcode", String(S.postcode).trim());
+        fd.append("consent", "yes"); fd.append("website", S.sendHp || "");
+        fd.append("elapsed", String(Math.round((Date.now() - startedAt) / 1000)));
+        fd.append("ref", ref); fd.append("project", S.project || "");
+        fd.append("property", TYPE_LABEL[S.type] || S.type);
+        fd.append("size", (isBiz() ? P.totalArea + " m²" : S.beds + " bed") + ", " + S.floors + (S.floors === 1 ? " floor" : " floors"));
+        fd.append("aps", String(P.totalAPs)); fd.append("cams", String(P.cams)); fd.append("days", fmtDays(P.days));
+        fd.append("gateway", P.selG ? P.selG.full : "Keeping own router");
+        fd.append("notes", S.notes || "");
+        fd.append("pdf", blob, "plan.pdf");
+        var ctl = typeof AbortController === "function" ? new AbortController() : null;
+        var timer = ctl ? setTimeout(function () { ctl.abort(); }, 25000) : null;
+        return fetch(CONFIG.sendUrl, { method: "POST", body: fd, mode: "cors", credentials: "omit", signal: ctl ? ctl.signal : undefined })
+          .then(function (res) { if (timer) clearTimeout(timer); if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
+          .then(function (j) { if (!j || !j.ok) throw new Error("not ok"); });
+      }).then(function () {
+        S.sendState = "sent"; rerenderKeepScroll();
+        var box = R("sendBox"); if (box) box.scrollIntoView({ behavior: "smooth", block: "center" });
+      }).catch(function (e) {
+        S.sendState = ""; rerenderKeepScroll();
+        var st = R("sendStatus");
+        if (st) { st.textContent = "Sorry, that didn't send. Please try again, or press Export PDF and email it to " + CONFIG.email + "."; st.className = "send-status bad"; }
+        if (window.console) console.error("[CityPlug planner] send failed:", e);
+      });
     }
 
     function planText() {
       var P = plan(), L = [];
       L.push(CONFIG.company + " Wi-Fi plan" + (S.project ? " — " + S.project : ""));
-      if (S.customer) L.push("Customer: " + S.customer);
+      if (S.customer) L.push("Name: " + S.customer);
       if (S.postcode) L.push("Postcode: " + S.postcode);
       L.push("", "Access points: " + P.totalAPs + " | Cameras: " + P.cams + " | New cable runs: " + P.newRuns + " | On site: " + fmtDays(P.days));
       ["Network", "Wi-Fi", "CCTV", "Cabling"].forEach(function (g) {
@@ -707,7 +800,13 @@
       doc.splitTextToSize = function (t, w, o) { return _split(pdfSafe(t), w, o); };
       doc.setProperties({ title: CONFIG.company + " - " + title, subject: "Wi-Fi & CCTV installation plan", author: CONFIG.company, creator: CONFIG.website });
       function color(c, kind) { doc[kind === "fill" ? "setFillColor" : kind === "draw" ? "setDrawColor" : "setTextColor"](c[0], c[1], c[2]); }
-      function img(im, x, yy, h) { if (!im) return 0; var w = h * im.w / im.h; try { doc.addImage(im.data, "PNG", x, yy, w, h, undefined, "FAST"); } catch (e) { return 0; } return w; }
+      function fade(op, draw) {   // draw at reduced opacity (PDF graphics state); full opacity again afterwards
+        var G = op < 1 && doc.setGState && (doc.GState || (window.jspdf && window.jspdf.GState));
+        if (G) doc.setGState(new G({ opacity: op }));
+        try { draw(); } finally { if (G) doc.setGState(new G({ opacity: 1 })); }
+      }
+      function img(im, x, yy, h) { if (!im) return 0; var w = h * im.w / im.h, op = im === B.logo ? CONFIG.pdfOpacity.logo : im === B.stamp ? CONFIG.pdfOpacity.stamp : 1;
+        try { fade(op, function () { doc.addImage(im.data, "PNG", x, yy, w, h, undefined, "FAST"); }); } catch (e) { return 0; } return w; }
       function ensure(hgt) { if (y + hgt > PH - 24) { doc.addPage(); y = TOP; } }
       function heading(num, t) {
         ensure(20); y += 9;
@@ -767,7 +866,7 @@
       doc.setFont("helvetica", "bold"); doc.setFontSize(23); color(INK);
       var tl = doc.splitTextToSize(title, tw); doc.text(tl, M, 53); y = 53 + (tl.length - 1) * 9;
       y += 9;
-      var meta = [["Customer", S.customer || "—"], ["Postcode", S.postcode || "—"], ["Prepared", today], ["Property", TYPE_LABEL[S.type] + ", ~" + Math.round(P.totalArea) + " m²"]];
+      var meta = [["Name", S.customer || "—"], ["Postcode", S.postcode || "—"], ["Prepared", today], ["Property", TYPE_LABEL[S.type] + ", ~" + Math.round(P.totalArea) + " m²"]];
       var mw = tw / 4;
       meta.forEach(function (m, i) {
         var x = M + i * mw;
@@ -788,7 +887,7 @@
       heading(1, "Gateway");
       table(null, P.selG ? [[P.selG.full, P.selG.blurb + (P.cams ? (P.onGateway ? ". Records the cameras." : ". Network only; cameras record on a separate NVR.") : ""), "1"],
           [{ content: "Estimated load", styles: { fontStyle: "normal", textColor: MUTED } }, Math.round(P.gwLoad * 100) + "% (rough guide, confirmed with Ubiquiti's calculator)", ""]]
-        : [["None", "Customer keeps their existing router", ""]]);
+        : [["None", "You keep your existing router", ""]]);
       P.gwWarn.forEach(function (w) { callout(w, true); });
 
       // 2. Access points
@@ -817,7 +916,7 @@
         callout("NVR needed? " + P.recReason, false);
         var cRows = [];
         if (P.newCams) cRows.push(["New UniFi cameras", P.replaced ? "includes " + P.replaced + " replacing analogue" : "G5 range, smart detections", String(P.newCams)]);
-        if (P.onvifCams) cRows.push(["Customer's own cameras (ONVIF)", "24/7 recording, live view, no licence fee", String(P.onvifCams)]);
+        if (P.onvifCams) cRows.push(["Your own cameras (ONVIF)", "24/7 recording, live view, no licence fee", String(P.onvifCams)]);
         if (P.aiPorts) cRows.push(["UniFi AI Port", "smart detections for own cameras", String(P.aiPorts)]);
         if (P.onGateway) cRows.push(["Recording", "On the " + P.selG.name + ": " + P.gwStore(P.selG) + ", " + S.retention + " days 24/7 (~" + fmtTB(P.storageTB) + " needed)", String(P.selG.bays || 1)]);
         else {
@@ -867,7 +966,7 @@
       });
       y += 27;
 
-      if (S.notes) { heading("", "Customer notes"); para(S.notes, 9.5, INK); }
+      if (S.notes) { heading("", "Your notes"); para(S.notes, 9.5, INK); }
 
       // Sign-off with the stamp
       ensure(46); y += 6;
@@ -909,7 +1008,7 @@
         root._lastPdf = doc;                // exposed for testing
         doc.save(pdfFileName());
         var framed = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
-        toast(framed ? "PDF exported. If nothing downloaded, this preview blocks downloads; it works on the live site." : "PDF downloaded");
+        toast(framed ? "PDF exported. If nothing downloaded, open the planner in its own browser tab and try again." : "PDF downloaded");
       }).catch(function (e) {
         toast("Couldn't create the PDF. Check your connection and try again.");
         if (window.console) console.error("[CityPlug planner] PDF export failed:", e);
@@ -943,7 +1042,7 @@
     }
     function updateAside() {
       var P = plan();
-      R("kAP").textContent = P.totalAPs; R("kCam").textContent = P.cams; R("kDays").textContent = fmtDays(P.days);
+      R("kAP").textContent = P.totalAPs; R("kCam").textContent = P.cams; R("kDays").textContent = fmtDaysNum(P.days);
       R("asideProject").textContent = S.project || "Live estimate";
       var top = [P.kit.filter(function (k) { return k.group === "Network"; })[0]]
         .concat(P.kit.filter(function (k) { return k.group === "Wi-Fi"; }), P.kit.filter(function (k) { return k.group === "CCTV"; }))
@@ -984,6 +1083,7 @@
       if (t.closest('[data-r="next"]')) { if (step < 3) { step++; render(); scrollTop(); } return; }
       if (t.closest('[data-r="back"]')) { if (step > 0) { step--; render(); scrollTop(); } return; }
       if ((el = t.closest('[data-r="pdfBtn"]'))) { exportPDF(el); return; }
+      if (t.closest('[data-r="sendBtn"]')) { if (S.sendState !== "sending") sendPlan(); return; }
       if (t.closest('[data-r="copyBtn"]')) {
         var txt = planText();
         (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(txt) : Promise.reject())
@@ -996,11 +1096,12 @@
       }
       if (t.closest('[data-r="apReset"]')) { S.apAdj = {}; rerenderKeepScroll(); return; }
       if (t.closest('[data-r="addCctv"]')) { S.uses = S.uses.concat(["cctv"]); if (!S.camsNew && !S.camsExisting) S.camsNew = 4; rerenderKeepScroll(); return; }
-      if (t.closest('[data-r="editBtn"]')) { step = 0; S.gw = S.ap = S.sw = S.rec = null; render(); scrollTop(); return; }
+      if (t.closest('[data-r="editBtn"]')) { step = 0; S.gw = S.ap = S.sw = S.rec = null; S.gwDisk = "auto"; render(); scrollTop(); return; }
     });
     root.addEventListener("input", function (e) {
       var el = e.target;
       if (el.dataset.t) { S[el.dataset.t] = el.value; if (el.dataset.t === "project") updateAside(); }
+      if (el.dataset.c) S[el.dataset.c] = el.checked;
       if (el.dataset.n) { S[el.dataset.n] = +el.value; updateAside(); }
     });
 
@@ -1026,6 +1127,7 @@
       var cfg = {};
       if (el.dataset.header === "false") cfg.showHeader = false;
       if (el.dataset.project) cfg.project = el.dataset.project;
+      if (el.dataset.sendUrl && /^https:\/\//.test(el.dataset.sendUrl)) cfg.sendUrl = el.dataset.sendUrl;
       api.mount(el, Object.assign(cfg, window.CityPlugPlannerConfig || {}));
     });
   }
