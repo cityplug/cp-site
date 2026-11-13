@@ -18,7 +18,8 @@ class PlannerReleaseTests(unittest.TestCase):
 
     def test_planner_is_link_only_and_has_no_third_party_connection_permission(self):
         home = (ROOT/'index.html').read_text()
-        self.assertEqual(home.count('href="/wifi-planner/"'), 1)
+        # Approved redesign: one link in the quote card and one on the Wi-Fi service card.
+        self.assertLessEqual(home.count('href="/wifi-planner/"'), 2)
         self.assertNotIn('wifi-planner.js', home)
         self.assertNotIn('wifi-planner.css', home)
         self.assertRegex(home, r'(?s)<h3>Whole-home Wi-Fi</h3>.*?href="/wifi-planner/".*?</article>')
@@ -36,7 +37,7 @@ class PlannerReleaseTests(unittest.TestCase):
         self.assertIn('name="referrer" content="no-referrer"', html)
         self.assertEqual((ROOT/'CNAME').read_text().strip(), 'www.cityplug.co.uk')
         files = {str(p.relative_to(ROOT/'wifi-planner')) for p in (ROOT/'wifi-planner').rglob('*') if p.is_file()}
-        self.assertEqual(files, {'index.html','wifi-planner.js','wifi-planner.css','vendor/jspdf.umd.min.js','vendor/jspdf.plugin.autotable.min.js','vendor/LICENSE-jspdf.txt','vendor/LICENSE-jspdf-autotable.txt'})
+        self.assertEqual(files, {'index.html','wifi-planner.js','wifi-planner.css','vendor/jspdf.umd.min.js','vendor/jspdf.plugin.autotable.min.js','vendor/LICENSE-jspdf.txt','vendor/LICENSE-jspdf-autotable.txt','brand/logo.png','brand/stamp.png'})
 
     def test_send_is_off_by_default_and_only_on_button_press(self):
         script = (ROOT / 'wifi-planner/wifi-planner.js').read_text()

@@ -23,65 +23,6 @@ if (serviceSelect) {
   }
 }
 
-// Staff shortcut: on a staff device the footer "quote form" link opens the private quote tool.
-// Switch on once per device with https://www.cityplug.co.uk/#team=https://<name>.<tailnet>.ts.net
-// and off with #team=off. The address lives only in that browser's storage; visitors always get #contact.
-(() => {
-  const KEY = "cityplug-team-url";
-  const toTeamUrl = (value) => {
-    try {
-      const url = new URL(value);
-      if (url.protocol !== "https:" || !url.hostname.endsWith(".ts.net") || url.username || url.password) return "";
-      return url.origin + "/";
-    } catch (error) {
-      return "";
-    }
-  };
-  let store = null;
-  try {
-    store = window.localStorage;
-  } catch (error) {
-    store = null;
-  }
-  const readHash = () => {
-    const hash = window.location.hash;
-    if (!store || !hash.startsWith("#team=")) return;
-    try {
-      const value = decodeURIComponent(hash.slice(6));
-      if (value === "off") {
-        store.removeItem(KEY);
-      } else if (toTeamUrl(value)) {
-        store.setItem(KEY, toTeamUrl(value));
-      }
-    } catch (error) {
-      /* storage blocked: leave the public link alone */
-    }
-    history.replaceState(null, "", window.location.pathname + window.location.search);
-  };
-  const applyLink = () => {
-    let saved = "";
-    try {
-      saved = store ? toTeamUrl(store.getItem(KEY) || "") : "";
-    } catch (error) {
-      saved = "";
-    }
-    document.querySelectorAll("[data-team-link]").forEach((link) => {
-      link.href = saved || "#contact";
-      if (saved) {
-        link.title = "Opens the private CityPlug quote tool (staff device)";
-      } else {
-        link.removeAttribute("title");
-      }
-    });
-  };
-  readHash();
-  applyLink();
-  window.addEventListener("hashchange", () => {
-    readHash();
-    applyLink();
-  });
-})();
-
 function updateHeaderState() {
   if (!header) return;
   header.classList.toggle("is-scrolled", window.scrollY > 12);

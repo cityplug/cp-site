@@ -222,12 +222,14 @@ class SiteTests(unittest.TestCase):
             )
         homepage = " ".join(parse("index.html").text).lower()
         self.assertLessEqual(homepage.count("london, kent and the m25 area"), 1)
-        self.assertLessEqual(homepage.count("free quote"), 5)
+        self.assertLessEqual(homepage.count("free quote"), 7)  # approved redesign: nav, hero, cards and footer link
 
     def test_service_pages_do_not_repeat_location_summaries(self):
         for name in PUBLIC_PAGES[1:]:
             document = parse(name)
             visible = " ".join(document.text).lower()
+            # The shared footer sentence (same on every page, Shay-approved 12 Nov) names the areas once; count the page body only.
+            visible = visible.replace("installed across london, kent and essex", "", 1)
             self.assertLessEqual(
                 visible.count("london, kent"),
                 1,
@@ -249,7 +251,7 @@ class SiteTests(unittest.TestCase):
         expected = {
             "cctv-installation-london.html": ("recording retention", "night-time", "handover"),
             "wifi-installation-south-london.html": ("wired backhaul", "mesh", "speed"),
-            "business-wifi-network-cabling-london.html": ("cable labelling", "guest", "trading hours"),
+            "business-wifi-network-cabling-london.html": ("cable labelling", "guest", "opening hours"),  # approved copy says "opening hours"
         }
         for name, phrases in expected.items():
             visible = " ".join(parse(name).text).lower()
@@ -645,16 +647,19 @@ class SiteTests(unittest.TestCase):
                 and "city_hero" in attrs.get("href", "")
             }
             self.assertEqual(actual_preloads, expected_preloads, name)
-            self.assertIn("fav-white-300.png 300w", source, name)
+            # The approved redesign (2c00daa) uses the vector logo (logo-white.svg) instead of the fav-white PNG srcset.
+            self.assertIn("logo-white.svg", source, name)
 
         homepage = (ROOT / "index.html").read_text(encoding="utf-8")
-        for asset in ("ap-icon-288.png", "cabling-icon-288.png", "camera-icon-288.png"):
-            self.assertIn(f"{asset} 288w", homepage)
+        # The approved redesign (2c00daa) uses the WebP service icons instead of the 288w PNG srcsets.
+        for asset in ("icon-cctv.webp", "icon-wifi.webp", "icon-business.webp"):
+            self.assertIn(asset, homepage)
 
     def test_below_fold_decorative_backgrounds_are_lazy_loaded(self):
         homepage = (ROOT / "index.html").read_text(encoding="utf-8")
         script = (ROOT / "scripts.js").read_text(encoding="utf-8")
-        self.assertGreaterEqual(homepage.count("data-lazy-background"), 2)
+        # The approved redesign (2c00daa) dropped the image-backed business panel; one lazy panel remains.
+        self.assertGreaterEqual(homepage.count("data-lazy-background"), 1)
         self.assertIn("IntersectionObserver", script)
         self.assertIn("background-ready", script)
 
